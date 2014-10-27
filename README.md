@@ -8,11 +8,16 @@ functionality for our sites.
 
 # Components:
 
-* Geocoder //TODO
+* City from Zipcode
+* Zipcode from location
+* Geocoder
 * Bulk Geocoder //TODO
 * Reverse-geocoder //TODO
 * Bulk Reverse-geocoder //TODO
-* Zipcode city finder //TODO
 
 # Usage
     var geo = require('starchup-geo');
+
+    geo.cityForZip(zipcode, function(err, city) {});
+    geo.zipForLocation({lat: latitude, lng: longitude}, function(err, zipcode) {});
+    geo.geocode(addressString, function(err, location) {});
