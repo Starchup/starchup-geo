@@ -15,6 +15,7 @@
   },
   "engines": { "node": ">= 0.10" },
   "dependencies": {
+    "googlemaps": "^0.x",
     "node-zippopotamus": "^1.x"
     },
   "scripts": {},
