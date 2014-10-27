@@ -14,7 +14,9 @@
     "url": "http://github.com/Starchup/starchup-geo"
   },
   "engines": { "node": ">= 0.10" },
-  "dependencies": {},
+  "dependencies": {
+    "node-zippopotamus": "^1.x"
+    },
   "scripts": {},
   "readmeFilename": "README.md",
   "bugs": { "url": "https://github.com/Starchup/starchup-geo/issues"},

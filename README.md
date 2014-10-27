@@ -9,8 +9,8 @@ functionality for our sites.
 # Components:
 
 * Geocoder //TODO
-* Reverse-geocoder //TODO
 * Bulk Geocoder //TODO
+* Reverse-geocoder //TODO
 * Bulk Reverse-geocoder //TODO
 * Zipcode city finder //TODO
 
