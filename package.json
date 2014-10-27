@@ -1,0 +1,22 @@
+{
+  "name": "starchup-geo",
+  "version": "0.1.0",
+  "main": "./lib/geo",
+  "description": "Various required Starchup geo-related components",
+  "author": {
+    "name": "Starchup Inc",
+    "email": "info@starchup.com",
+    "url": "http://starchup.com"
+  },
+  "keywords": ["starchup"],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/Starchup/starchup-geo"
+  },
+  "engines": { "node": ">= 0.10" },
+  "dependencies": {},
+  "scripts": {},
+  "readmeFilename": "README.md",
+  "bugs": { "url": "https://github.com/Starchup/starchup-geo/issues"},
+  "homepage": "https://github.com/Starchup/starchup-geo"
+}
