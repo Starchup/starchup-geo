@@ -55,3 +55,21 @@ exports.geocode = function(address, cb)
         cb(err, result.results[0].geometry.location);
     });
 };
+
+exports.travel_time = function(origin, destination, cb)
+{
+    gm.directions(origin + ', USA', destination + ', USA', function(err, result)
+    {
+        if (err) return cb(err);
+
+        if (result.status != "OK" ||
+            !result.routes || result.routes.length < 1 ||
+            !result.routes[0].legs || result.routes[0].legs.length < 1)
+        {
+            var error = new Error('Could not create address with Google Maps');
+            error.code = '490';
+            return cb(error, result);
+        }
+        cb(err, result.routes[0].legs[0].duration.value);
+    });
+};
