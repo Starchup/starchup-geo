@@ -47,7 +47,15 @@ exports.geocode = function(address, cb)
     {
         if (err) return cb(err);
 
-        if (result.status != "OK" || result.results.length < 1) {
+        if (result.status == "OVER_QUERY_LIMIT")
+        {
+            var error = new Error('Reached Google Maps API limit');
+            error.code = '490';
+            return cb(error, result);
+        }
+        
+        if (result.status != "OK" || result.results.length < 1)
+        {
             var error = new Error('Could not create address with Google Maps');
             error.code = '490';
             return cb(error, result);
@@ -62,10 +70,17 @@ exports.travel_time = function(origin, destination, cb)
     {
         if (err) return cb(err);
 
+        if (result.status == "OVER_QUERY_LIMIT")
+        {
+            var error = new Error('Reached Google Maps API limit');
+            error.code = '490';
+            return cb(error, result);
+        }
+        
         if (result.status != "OK" ||
             !result.routes || result.routes.length < 1 ||
             !result.routes[0].legs || result.routes[0].legs.length < 1)
-        {
+        {   
             var error = new Error('Could not create address with Google Maps');
             error.code = '490';
             return cb(error, result);
