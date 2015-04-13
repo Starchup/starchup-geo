@@ -1,6 +1,8 @@
 var zipp = require('node-zippopotamus');
 var gm = require('googlemaps');
 
+gm.config("console-key", process.env.GOOGLE_GEO_KEY);
+
 exports.cityForZip = function(zipcode, cb)
 {
     zipp('us', zipcode, function (err, json)
