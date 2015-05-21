@@ -72,11 +72,12 @@ exports.zipForLocation = function(location, cb)
 /**
  * Geocode an address to coordinates
  *
+ * param {identifier} an identifier provided to return with the location
  * param {zipcode} the zipcode to match
  *
- * return coordinates
+ * return {identifier: coordinates}
  */
-exports.geocode = function(address, cb)
+exports.geocode = function(identifier, address, cb)
 {
     limiter.removeTokens(1, function(err, remainingRequests)
     {
@@ -103,7 +104,10 @@ exports.geocode = function(address, cb)
                 error.code = '490';
                 return cb(error, result);
             }
-            cb(err, result.results[0].geometry.location);
+            var returnObj = {};
+            returnObj[identifier] = result.results[0].geometry.location;
+
+            cb(err, returnObj);
         });
     });
 };
@@ -111,12 +115,13 @@ exports.geocode = function(address, cb)
 /**
  * Get the time to travel between 2 provided locations
  *
+ * param {identifier} an identifier provided to return with the time
  * param {origin} the origin address, without country
  * param {destination} the destination address, without country
  *
- * return time in seconds
+ * return {identifier: time} in seconds
  */
-exports.travel_time = function(origin, destination, cb)
+exports.travel_time = function(identifier, origin, destination, cb)
 {
     limiter.removeTokens(1, function(err, remainingRequests)
     {
@@ -143,7 +148,10 @@ exports.travel_time = function(origin, destination, cb)
                 error.code = '490';
                 return cb(error, result);
             }
-            cb(err, result.routes[0].legs[0].duration.value);
+            var returnObj = {};
+            returnObj[identifier] = result.routes[0].legs[0].duration.value;
+            
+            cb(err, returnObj);
         });
     });
 };
