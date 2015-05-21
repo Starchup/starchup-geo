@@ -1,8 +1,15 @@
 var zipp = require('node-zippopotamus');
-var gm = require('googlemaps');
+var GoogleMapsAPI = require('googlemaps');
 
-gm.config("console-key", process.env.GOOGLE_GEO_KEY);
+var gm = new GoogleMapsAPI({ key: process.env.GOOGLE_GEO_KEY });
 
+/**
+ * Get the city matched to a provided zipcode
+ *
+ * param {zipcode} the zipcode to match
+ *
+ * return city
+ */
 exports.cityForZip = function(zipcode, cb)
 {
     zipp('us', zipcode, function (err, json)
@@ -24,10 +31,23 @@ exports.cityForZip = function(zipcode, cb)
     });
 }
 
+/**
+ * Get the zipcode matched to a provided geolocation
+ *
+ * param {location} the geolocation to match
+ *
+ * return zipcode
+ */
 exports.zipForLocation = function(location, cb)
 {
     var location = String(location.lat) + "," + String(location.lng);
-    gm.reverseGeocode(location, function(err, result)
+    var params = {
+        "latlng":        location,
+        "result_type":   "postal_code",
+        "language":      "en",
+        "location_type": "APPROXIMATE"
+    };
+    gm.reverseGeocode(params, function(err, result)
     {
         if (err) return cb(err);
 
@@ -43,9 +63,22 @@ exports.zipForLocation = function(location, cb)
     });
 }
 
+/**
+ * Geocode an address to coordinates
+ *
+ * param {zipcode} the zipcode to match
+ *
+ * return coordinates
+ */
 exports.geocode = function(address, cb)
 {
-    gm.geocode(address + ', USA', function(err, result)
+    var params = {
+        "address":    address,
+        "components": "components=country:US",
+        "language":   "en",
+        "region":     "us"
+    };
+    gm.geocode(params, function(err, result)
     {
         if (err) return cb(err);
 
@@ -66,9 +99,21 @@ exports.geocode = function(address, cb)
     });
 };
 
+/**
+ * Get the time to travel between 2 provided locations
+ *
+ * param {origin} the origin address, without country
+ * param {destination} the destination address, without country
+ *
+ * return time in seconds
+ */
 exports.travel_time = function(origin, destination, cb)
 {
-    gm.directions(origin + ', USA', destination + ', USA', function(err, result)
+    var params = {
+        origin: origin + ', USA',
+        destination: destination + ', USA'
+    };
+    gm.directions(params, function(err, result)
     {
         if (err) return cb(err);
 
