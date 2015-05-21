@@ -43,9 +43,10 @@ exports.cityForZip = function(zipcode, cb)
  */
 exports.zipForLocation = function(location, cb)
 {
+    var loc = location;
     limiter.removeTokens(1, function(err, remainingRequests)
     {
-        var location = String(location.lat) + "," + String(location.lng);
+        var location = String(loc.lat) + "," + String(loc.lng);
         var params = {
             "latlng":        location,
             "result_type":   "postal_code",
@@ -79,10 +80,12 @@ exports.zipForLocation = function(location, cb)
  */
 exports.geocode = function(identifier, address, cb)
 {
+    var id = identifier;
+    var add = address;
     limiter.removeTokens(1, function(err, remainingRequests)
     {
         var params = {
-            "address":    address,
+            "address":    add,
             "components": "components=country:US",
             "language":   "en",
             "region":     "us"
@@ -105,7 +108,7 @@ exports.geocode = function(identifier, address, cb)
                 return cb(error, result);
             }
             var returnObj = {};
-            returnObj[identifier] = result.results[0].geometry.location;
+            returnObj[id] = result.results[0].geometry.location;
 
             cb(err, returnObj);
         });
@@ -123,11 +126,14 @@ exports.geocode = function(identifier, address, cb)
  */
 exports.travel_time = function(identifier, origin, destination, cb)
 {
+    var id = identifier;
+    var orig = origin;
+    var dest = destination;
     limiter.removeTokens(1, function(err, remainingRequests)
     {
         var params = {
-            origin: origin + ', USA',
-            destination: destination + ', USA'
+            origin: orig + ', USA',
+            destination: dest + ', USA'
         };
         gm.directions(params, function(err, result)
         {
@@ -149,7 +155,7 @@ exports.travel_time = function(identifier, origin, destination, cb)
                 return cb(error, result);
             }
             var returnObj = {};
-            returnObj[identifier] = result.routes[0].legs[0].duration.value;
+            returnObj[id] = result.routes[0].legs[0].duration.value;
             
             cb(err, returnObj);
         });
