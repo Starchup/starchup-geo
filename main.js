@@ -1,6 +1,9 @@
 var zipp = require('node-zippopotamus');
 var GoogleMapsAPI = require('googlemaps');
 
+var RateLimiter = require('limiter').RateLimiter;
+var limiter = new RateLimiter(1, 100);
+
 var gm = new GoogleMapsAPI({ key: process.env.GOOGLE_GEO_KEY });
 
 /**
@@ -40,26 +43,29 @@ exports.cityForZip = function(zipcode, cb)
  */
 exports.zipForLocation = function(location, cb)
 {
-    var location = String(location.lat) + "," + String(location.lng);
-    var params = {
-        "latlng":        location,
-        "result_type":   "postal_code",
-        "language":      "en",
-        "location_type": "APPROXIMATE"
-    };
-    gm.reverseGeocode(params, function(err, result)
+    limiter.removeTokens(1, function(err, remainingRequests)
     {
-        if (err) return cb(err);
-
-        var zip;
-        result.results[0].address_components.forEach(function(component)
+        var location = String(location.lat) + "," + String(location.lng);
+        var params = {
+            "latlng":        location,
+            "result_type":   "postal_code",
+            "language":      "en",
+            "location_type": "APPROXIMATE"
+        };
+        gm.reverseGeocode(params, function(err, result)
         {
-            if ('types' in component && component.types[0] === 'postal_code') 
+            if (err) return cb(err);
+
+            var zip;
+            result.results[0].address_components.forEach(function(component)
             {
-                zip = component.long_name;
-            } 
+                if ('types' in component && component.types[0] === 'postal_code') 
+                {
+                    zip = component.long_name;
+                } 
+            });
+            cb(err, zip);
         });
-        cb(err, zip);
     });
 }
 
@@ -72,30 +78,33 @@ exports.zipForLocation = function(location, cb)
  */
 exports.geocode = function(address, cb)
 {
-    var params = {
-        "address":    address,
-        "components": "components=country:US",
-        "language":   "en",
-        "region":     "us"
-    };
-    gm.geocode(params, function(err, result)
+    limiter.removeTokens(1, function(err, remainingRequests)
     {
-        if (err) return cb(err);
+        var params = {
+            "address":    address,
+            "components": "components=country:US",
+            "language":   "en",
+            "region":     "us"
+        };
+        gm.geocode(params, function(err, result)
+        {
+            if (err) return cb(err);
 
-        if (result.status == "OVER_QUERY_LIMIT")
-        {
-            var error = new Error('Reached Google Maps API limit');
-            error.code = '490';
-            return cb(error, result);
-        }
-        
-        if (result.status != "OK" || result.results.length < 1)
-        {
-            var error = new Error('Could not create address with Google Maps');
-            error.code = '490';
-            return cb(error, result);
-        }
-        cb(err, result.results[0].geometry.location);
+            if (result.status == "OVER_QUERY_LIMIT")
+            {
+                var error = new Error('Reached Google Maps API limit');
+                error.code = '490';
+                return cb(error, result);
+            }
+            
+            if (result.status != "OK" || result.results.length < 1)
+            {
+                var error = new Error('Could not create address with Google Maps');
+                error.code = '490';
+                return cb(error, result);
+            }
+            cb(err, result.results[0].geometry.location);
+        });
     });
 };
 
@@ -109,29 +118,32 @@ exports.geocode = function(address, cb)
  */
 exports.travel_time = function(origin, destination, cb)
 {
-    var params = {
-        origin: origin + ', USA',
-        destination: destination + ', USA'
-    };
-    gm.directions(params, function(err, result)
+    limiter.removeTokens(1, function(err, remainingRequests)
     {
-        if (err) return cb(err);
-
-        if (result.status == "OVER_QUERY_LIMIT")
+        var params = {
+            origin: origin + ', USA',
+            destination: destination + ', USA'
+        };
+        gm.directions(params, function(err, result)
         {
-            var error = new Error('Reached Google Maps API limit');
-            error.code = '490';
-            return cb(error, result);
-        }
-        
-        if (result.status != "OK" ||
-            !result.routes || result.routes.length < 1 ||
-            !result.routes[0].legs || result.routes[0].legs.length < 1)
-        {   
-            var error = new Error('Could not create address with Google Maps');
-            error.code = '490';
-            return cb(error, result);
-        }
-        cb(err, result.routes[0].legs[0].duration.value);
+            if (err) return cb(err);
+
+            if (result.status == "OVER_QUERY_LIMIT")
+            {
+                var error = new Error('Reached Google Maps API limit');
+                error.code = '490';
+                return cb(error, result);
+            }
+            
+            if (result.status != "OK" ||
+                !result.routes || result.routes.length < 1 ||
+                !result.routes[0].legs || result.routes[0].legs.length < 1)
+            {   
+                var error = new Error('Could not create address with Google Maps');
+                error.code = '490';
+                return cb(error, result);
+            }
+            cb(err, result.routes[0].legs[0].duration.value);
+        });
     });
 };
