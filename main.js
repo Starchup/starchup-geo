@@ -48,10 +48,11 @@ exports.zipForLocation = function(location, cb)
     {
         var location = String(loc.lat) + "," + String(loc.lng);
         var params = {
-            "latlng":        location,
-            "result_type":   "postal_code",
-            "language":      "en",
-            "location_type": "APPROXIMATE"
+            latlng:        location,
+            result_type:   "postal_code",
+            language:      "en",
+            location_type: "APPROXIMATE",
+            region: "us"
         };
         gm.reverseGeocode(params, function(err, result)
         {
@@ -65,6 +66,9 @@ exports.zipForLocation = function(location, cb)
                     zip = component.long_name;
                 } 
             });
+            
+            var returnObj = {};
+            returnObj[id] = zip;
             cb(err, zip);
         });
     });
@@ -98,18 +102,18 @@ exports.geocode = function(identifier, address, cb)
             {
                 var error = new Error('Reached Google Maps API limit');
                 error.code = '490';
-                return cb(error, result);
+                return cb(error, identifier);
             }
             
             if (result.status != "OK" || result.results.length < 1)
             {
                 var error = new Error('Could not create address with Google Maps');
                 error.code = '490';
-                return cb(error, result);
+                return cb(error, identifier);
             }
+
             var returnObj = {};
             returnObj[id] = result.results[0].geometry.location;
-
             cb(err, returnObj);
         });
     });
@@ -133,7 +137,8 @@ exports.travel_time = function(identifier, origin, destination, cb)
     {
         var params = {
             origin: orig + ', USA',
-            destination: dest + ', USA'
+            destination: dest + ', USA',
+            region: "us"
         };
         gm.directions(params, function(err, result)
         {
@@ -143,7 +148,7 @@ exports.travel_time = function(identifier, origin, destination, cb)
             {
                 var error = new Error('Reached Google Maps API limit');
                 error.code = '490';
-                return cb(error, result);
+                return cb(error, identifier);
             }
             
             if (result.status != "OK" ||
@@ -152,11 +157,81 @@ exports.travel_time = function(identifier, origin, destination, cb)
             {   
                 var error = new Error('Could not create address with Google Maps');
                 error.code = '490';
-                return cb(error, result);
+                return cb(error, identifier);
             }
+
+            // Get the total duration
+            var duration = 0;
+            result.routes[0].legs.forEach(function(leg)
+            {
+                duration+=leg.duration.value;
+            });
+
+            // Return the duration
             var returnObj = {};
-            returnObj[id] = result.routes[0].legs[0].duration.value;
+            returnObj[id] = duration;
+            cb(err, returnObj);
+        });
+    });
+};
+
+/**
+ * Get the directions to travel between origin and destionation,
+ * optionally providing a set of waypoints.
+ *
+ * param {identifier} an identifier provided to return with the time
+ * param {origin} the destination address, without country
+ * param {destination} the destination address, without country
+ * param {waypoints} an array of address, without country
+ * param {date} departure time, as a unix timestamp
+ *
+ * return {identifier: directions}
+ */
+exports.directions = function(identifier, origin, destination, waypoints, date, cb)
+{
+    var id = identifier;
+    var orig = origin;
+    var dest = destination;
+
+    if (!orig || !destination)
+    {
+        var error = new Error('No origin or destination provided');
+        error.code = '490';
+        return cb(error, identifier);
+    }
+
+    limiter.removeTokens(1, function(err, remainingRequests)
+    {
+        var params = {
+            origin: orig + ', USA',
+            destination: dest + ', USA',
+            region: "us"
+        };
+        if (waypoints) params.waypoints = waypoints;
+        if (date) params.departureTime = date;
+
+        gm.directions(params, function(err, result)
+        {
+            if (err) return cb(err);
+
+            if (result.status == "OVER_QUERY_LIMIT")
+            {
+                var error = new Error('Reached Google Maps API limit');
+                error.code = '490';
+                return cb(error, identifier);
+            }
             
+            if (result.status != "OK" ||
+                !result.routes || result.routes.length < 1 ||
+                !result.routes[0].legs || result.routes[0].legs.length < 1)
+            {   
+                var error = new Error('Could not get directions with Google Maps');
+                error.code = '490';
+                return cb(error, identifier);
+            }
+
+            var returnObj = {};
+            returnObj[id] = result.routes[0];
             cb(err, returnObj);
         });
     });
