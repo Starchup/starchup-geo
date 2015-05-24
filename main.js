@@ -205,7 +205,17 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
             destination: dest + ', USA',
             region: "us"
         };
-        if (waypoints) params.waypoints = waypoints;
+        if (waypoints)
+        {
+            var locations = "";
+            waypoints.forEach(function(waypoint)
+            {
+                locations = locations + "," + waypoint;
+            });
+            locations = locations.substr(1,locations.length);
+            params.waypoints = locations;
+        }
+        
         if (date) params.departureTime = date;
 
         gm.directions(params, function(err, result)
