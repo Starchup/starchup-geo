@@ -67,8 +67,6 @@ exports.zipForLocation = function(location, cb)
                 } 
             });
             
-            var returnObj = {};
-            returnObj[id] = zip;
             cb(err, zip);
         });
     });
