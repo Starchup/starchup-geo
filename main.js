@@ -210,10 +210,11 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
             var locations = "";
             waypoints.forEach(function(waypoint)
             {
-                locations = locations + "," + waypoint;
+                locations = locations + "|" + waypoint;
             });
             locations = locations.substr(1,locations.length);
             params.waypoints = locations;
+            params.optimizeWaypoints = true;
         }
         
         if (date) params.departureTime = date;
