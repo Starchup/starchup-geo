@@ -35,44 +35,6 @@ exports.cityForZip = function(zipcode, cb)
 }
 
 /**
- * Get the zipcode matched to a provided geolocation
- *
- * param {location} the geolocation to match
- *
- * return zipcode
- */
-exports.zipForLocation = function(location, cb)
-{
-    var loc = location;
-    limiter.removeTokens(1, function(err, remainingRequests)
-    {
-        var location = String(loc.lat) + "," + String(loc.lng);
-        var params = {
-            latlng:        location,
-            result_type:   "postal_code",
-            language:      "en",
-            location_type: "APPROXIMATE",
-            region: "us"
-        };
-        gm.reverseGeocode(params, function(err, result)
-        {
-            if (err) return cb(err);
-
-            var zip;
-            result.results[0].address_components.forEach(function(component)
-            {
-                if ('types' in component && component.types[0] === 'postal_code') 
-                {
-                    zip = component.long_name;
-                } 
-            });
-            
-            cb(err, zip);
-        });
-    });
-}
-
-/**
  * Geocode an address to coordinates
  *
  * param {identifier} an identifier provided to return with the location
@@ -112,62 +74,6 @@ exports.geocode = function(identifier, address, cb)
 
             var returnObj = {};
             returnObj[id] = result.results[0].geometry.location;
-            cb(err, returnObj);
-        });
-    });
-};
-
-/**
- * Get the time to travel between 2 provided locations
- *
- * param {identifier} an identifier provided to return with the time
- * param {origin} the origin address, without country
- * param {destination} the destination address, without country
- *
- * return {identifier: time} in seconds
- */
-exports.travel_time = function(identifier, origin, destination, cb)
-{
-    var id = identifier;
-    var orig = origin;
-    var dest = destination;
-    limiter.removeTokens(1, function(err, remainingRequests)
-    {
-        var params = {
-            origin: orig + ', USA',
-            destination: dest + ', USA',
-            region: "us"
-        };
-        gm.directions(params, function(err, result)
-        {
-            if (err) return cb(err);
-
-            if (result.status == "OVER_QUERY_LIMIT")
-            {
-                var error = new Error('Reached Google Maps API limit');
-                error.code = '490';
-                return cb(error, identifier);
-            }
-            
-            if (result.status != "OK" ||
-                !result.routes || result.routes.length < 1 ||
-                !result.routes[0].legs || result.routes[0].legs.length < 1)
-            {   
-                var error = new Error('Could not create address with Google Maps');
-                error.code = '490';
-                return cb(error, identifier);
-            }
-
-            // Get the total duration
-            var duration = 0;
-            result.routes[0].legs.forEach(function(leg)
-            {
-                duration+=leg.duration.value;
-            });
-
-            // Return the duration
-            var returnObj = {};
-            returnObj[id] = duration;
             cb(err, returnObj);
         });
     });
