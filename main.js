@@ -7,6 +7,25 @@ var limiter = new RateLimiter(1, 100);
 var gm = new GoogleMapsAPI({ key: process.env.GOOGLE_GEO_KEY });
 
 /**
+ * Utility to support various countries
+ */
+var zipcodeFormats = {  'us': "^[a-zA-Z0-9]{5}",
+                        'ca': "^[a-zA-Z0-9]{3}( )[a-zA-Z0-9]{3}"};
+
+var supportedCountry = function(zipcode)
+{
+    for (var countryCode in zipcodeFormats)
+    {
+        if (!zipcodeFormats.hasOwnProperty(countryCode)) continue;
+
+        var zipcodeExp = zipcodeFormats[countryCode];
+        if (zipcode.match(zipcodeExp)) return countryCode;
+    }
+    return null;
+}
+exports.SUPPORTED_COUNTRY = supportedCountry;
+
+/**
  * Get the city matched to a provided zipcode
  *
  * param {zipcode} the zipcode to match
@@ -15,28 +34,31 @@ var gm = new GoogleMapsAPI({ key: process.env.GOOGLE_GEO_KEY });
  */
 exports.cityForZip = function(zipcode, cb)
 {
-    var country = 'us';
+    var country = supportedCountry(zipcode);
+    if (!country || country.length < 1)
+    {
+        var error = new Error('Zipcode format invalid or country not supported');
+        error.code = '400';
+        return cb(error);
+    }
 
-    // Add support for canada
-    if (zipcode.match(/[a-z]/i)) country = 'ca';
-    if (zipcode.match(/[a-z]/i)) zipcode.slice(0,3);
+    if (country == 'ca') zipcode = zipcode.slice(0,3);
 
     zipp(country, zipcode, function (err, json)
     {
+        console.log(err);
+        console.log(json);
         if (err) return cb(err);
-
         if (json.places.length < 1)
         {
-            var error = new Error('Could not get valid city for address');
-            error.code = '400';
-            return cb(error);
+            err = new Error('Could not get valid city for address');
+            err.code = '400';
+            return cb(err);
         }
         try {
             cb(err, json.places[0]["place name"]);
         }
-        catch (ex) {
-            cb(ex);
-        }
+        catch (ex) { cb(ex); }
     });
 }
 
