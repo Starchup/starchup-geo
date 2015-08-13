@@ -46,8 +46,6 @@ exports.cityForZip = function(zipcode, cb)
 
     zipp(country, zipcode, function (err, json)
     {
-        console.log(err);
-        console.log(json);
         if (err) return cb(err);
         if (json.places.length < 1)
         {
