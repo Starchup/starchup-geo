@@ -14,6 +14,8 @@ var zipcodeFormats = {  'us': "^[a-zA-Z0-9]{5}",
 
 var supportedCountry = function(zipcode)
 {
+    if (!zipcode) return null;
+    
     for (var countryCode in zipcodeFormats)
     {
         if (!zipcodeFormats.hasOwnProperty(countryCode)) continue;
@@ -34,6 +36,8 @@ exports.SUPPORTED_COUNTRY = supportedCountry;
  */
 exports.cityForZip = function(zipcode, cb)
 {
+    if (!zipcode) return null;
+
     var country = supportedCountry(zipcode);
     if (!country || country.length < 1)
     {
