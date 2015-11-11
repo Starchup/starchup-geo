@@ -10,6 +10,7 @@ var gm = new GoogleMapsAPI({ key: process.env.GOOGLE_GEO_KEY });
  * Utility to support various countries
  */
 var zipcodeFormats = {  'us': "^[a-zA-Z0-9]{5}",
+                        'za': "^[a-zA-Z0-9]{4}",
                         'ca': "^[a-zA-Z0-9]{3}( )[a-zA-Z0-9]{3}"};
 
 var supportedCountry = function(zipcode)
