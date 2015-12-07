@@ -75,15 +75,25 @@ exports.cityForZip = function(zipcode, cb)
  */
 exports.geocode = function(identifier, address, cb)
 {
+    var components = address.split(' ');
+    var zipcode = components[components.length-1];
+    var country = supportedCountry(zipcode);
+    if (!country || country.length < 1)
+    {
+        var error = new Error('Country not supported for geocoding');
+        error.code = '400';
+        return cb(error);
+    }
+
     var id = identifier;
     var add = address;
     limiter.removeTokens(1, function(err, remainingRequests)
     {
         var params = {
             "address":    add,
-            "components": "components=country:US",
+            "components": "components=country:" + country,
             "language":   "en",
-            "region":     "us"
+            "region":     country
         };
         gm.geocode(params, function(err, result)
         {
@@ -123,7 +133,7 @@ exports.geocode = function(identifier, address, cb)
  * return {identifier: directions}
  */
 exports.directions = function(identifier, origin, destination, waypoints, date, cb)
-{
+{    
     var id = identifier;
     var orig = origin;
     var dest = destination;
@@ -135,12 +145,22 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
         return cb(error, identifier);
     }
 
+    var components = origin.split(' ');
+    var zipcode = components[components.length-1];
+    var country = supportedCountry(zipcode);
+    if (!country || country.length < 1)
+    {
+        var error = new Error('Country not supported for directions');
+        error.code = '400';
+        return cb(error);
+    }
+
     limiter.removeTokens(1, function(err, remainingRequests)
     {
         var params = {
-            origin: orig + ', USA',
-            destination: dest + ', USA',
-            region: "us"
+            origin: orig + ', ' + country,
+            destination: dest + ', ' + country,
+            region: country
         };
         if (waypoints)
         {
