@@ -125,7 +125,7 @@ exports.geocode = function(identifier, address, cb)
  * optionally providing a set of waypoints.
  *
  * param {identifier} an identifier provided to return with the time
- * param {origin} the destination address, without country
+ * param {origin} either an address string, an order object with address field, or a latitude/longitude object
  * param {destination} the destination address, without country
  * param {waypoints} an array of address, without country
  * param {date} departure time, as a unix timestamp
@@ -135,30 +135,62 @@ exports.geocode = function(identifier, address, cb)
 exports.directions = function(identifier, origin, destination, waypoints, date, cb)
 {    
     var id = identifier;
-    var orig = origin;
+    var orig;
     var dest = destination;
 
-    if (!orig || !destination)
+    if (!origin || !destination)
     {
         var error = new Error('No origin or destination provided');
         error.code = '490';
         return cb(error, identifier);
     }
 
-    var components = origin.split(' ');
-    var zipcode = components[components.length-1];
-    var country = supportedCountry(zipcode);
-    if (!country || country.length < 1)
-    {
-        var error = new Error('Country not supported for directions');
-        error.code = '400';
-        return cb(error);
+    //Temporary protection for backwards compatibility - lots of places calling with origin as an address string
+    if(typeof origin !== 'string') {
+
+        //Origin is order object w/ customer_address object
+        if(origin.customer_address) {
+            address = origin.customer_address;
+            var zipcode = address.zip;
+            var country = supportedCountry(zipcode);
+            if (!country || country.length < 1)
+            {
+                var error = new Error('Country not supported for directions');
+                error.code = '400';
+                return cb(error);
+            }
+            //stringify customer address
+            var addressStr = address.street;
+            if (address.unit) addressStr = addressStr + ' ' + address.unit;
+            addressStr = addressStr + ', ' + address.city;
+            if (address.state) addressStr = addressStr + ' ' + address.state;
+            addressStr = addressStr + ' ' + address.zip;
+            addressStr = addressStr + ', ' + country;
+            orig = addressStr;
+
+        //Origin is lat/lng object
+        } else if(origin.lat && origin.lng) {
+            orig = origin.lat + ',' + origin.lng;
+        }
+        //Origin is an address string
+    } else {
+        var components = origin.split(' ');
+        var zipcode = components[components.length-1];
+        var country = supportedCountry(zipcode);
+        if (!country || country.length < 1)
+        {
+            var error = new Error('Country not supported for directions');
+            error.code = '400';
+            return cb(error);
+        }
+        orig = origin + ', ' + country;
     }
+
 
     limiter.removeTokens(1, function(err, remainingRequests)
     {
         var params = {
-            origin: orig + ', ' + country,
+            origin: orig,
             destination: dest + ', ' + country,
             region: country
         };
