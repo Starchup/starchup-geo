@@ -171,6 +171,10 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
         //Origin is lat/lng object
         } else if(origin.lat && origin.lng) {
             orig = origin.lat + ',' + origin.lng;
+        }  else {
+            var error = new Error('Provided origin is not valid');
+            error.code = '490';
+            return cb(error, identifier);
         }
         //Origin is an address string
     } else {
