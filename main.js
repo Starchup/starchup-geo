@@ -4,21 +4,23 @@ var GoogleMapsAPI = require('googlemaps');
 var RateLimiter = require('limiter').RateLimiter;
 var limiter = new RateLimiter(1, 100);
 
-var gm = new GoogleMapsAPI({ key: process.env.GOOGLE_GEO_KEY });
+var gm = new GoogleMapsAPI({
+    key: process.env.GOOGLE_GEO_KEY
+});
 
 /**
  * Utility to support various countries
  */
-var zipcodeFormats = {  'us': "^[a-zA-Z0-9]{5}",
-                        'za': "^[a-zA-Z0-9]{4}",
-                        'ca': "^[a-zA-Z0-9]{3}( )[a-zA-Z0-9]{3}"};
+var zipcodeFormats = {
+    'us': "^[a-zA-Z0-9]{5}",
+    'za': "^[a-zA-Z0-9]{4}",
+    'ca': "^[a-zA-Z0-9]{3}( )[a-zA-Z0-9]{3}"
+};
 
-var supportedCountry = function(zipcode)
-{
+var supportedCountry = function(zipcode) {
     if (!zipcode) return null;
-    
-    for (var countryCode in zipcodeFormats)
-    {
+
+    for (var countryCode in zipcodeFormats) {
         if (!zipcodeFormats.hasOwnProperty(countryCode)) continue;
 
         var zipcodeExp = zipcodeFormats[countryCode];
@@ -35,33 +37,30 @@ exports.SUPPORTED_COUNTRY = supportedCountry;
  *
  * return city
  */
-exports.cityForZip = function(zipcode, cb)
-{
+exports.cityForZip = function(zipcode, cb) {
     if (!zipcode) return null;
 
     var country = supportedCountry(zipcode);
-    if (!country || country.length < 1)
-    {
+    if (!country || country.length < 1) {
         var error = new Error('Zipcode format invalid or country not supported');
         error.code = '400';
         return cb(error);
     }
 
-    if (country == 'ca') zipcode = zipcode.slice(0,3);
+    if (country == 'ca') zipcode = zipcode.slice(0, 3);
 
-    zipp(country, zipcode, function (err, json)
-    {
+    zipp(country, zipcode, function(err, json) {
         if (err) return cb(err);
-        if (json.places.length < 1)
-        {
+        if (json.places.length < 1) {
             err = new Error('Could not get valid city for address');
             err.code = '400';
             return cb(err);
         }
         try {
             cb(err, json.places[0]["place name"]);
+        } catch (ex) {
+            cb(ex);
         }
-        catch (ex) { cb(ex); }
     });
 }
 
@@ -73,13 +72,11 @@ exports.cityForZip = function(zipcode, cb)
  *
  * return {identifier: coordinates}
  */
-exports.geocode = function(identifier, address, cb)
-{
+exports.geocode = function(identifier, address, cb) {
     var components = address.split(' ');
-    var zipcode = components[components.length-1];
+    var zipcode = components[components.length - 1];
     var country = supportedCountry(zipcode);
-    if (!country || country.length < 1)
-    {
+    if (!country || country.length < 1) {
         var error = new Error('Country not supported for geocoding');
         error.code = '400';
         return cb(error);
@@ -87,27 +84,23 @@ exports.geocode = function(identifier, address, cb)
 
     var id = identifier;
     var add = address;
-    limiter.removeTokens(1, function(err, remainingRequests)
-    {
+    limiter.removeTokens(1, function(err, remainingRequests) {
         var params = {
-            "address":    add,
+            "address": add,
             "components": "components=country:" + country,
-            "language":   "en",
-            "region":     country
+            "language": "en",
+            "region": country
         };
-        gm.geocode(params, function(err, result)
-        {
+        gm.geocode(params, function(err, result) {
             if (err) return cb(err);
 
-            if (result.status == "OVER_QUERY_LIMIT")
-            {
+            if (result.status == "OVER_QUERY_LIMIT") {
                 var error = new Error('Reached Google Maps API limit');
                 error.code = '490';
                 return cb(error, identifier);
             }
-            
-            if (result.status != "OK" || result.results.length < 1)
-            {
+
+            if (result.status != "OK" || result.results.length < 1) {
                 var error = new Error('Could not create address with Google Maps');
                 error.code = '490';
                 return cb(error, identifier);
@@ -132,29 +125,26 @@ exports.geocode = function(identifier, address, cb)
  *
  * return {identifier: directions}
  */
-exports.directions = function(identifier, origin, destination, waypoints, date, cb)
-{    
+exports.directions = function(identifier, origin, destination, waypoints, date, cb) {
     var id = identifier;
     var orig;
     var dest = destination;
 
-    if (!origin || !destination)
-    {
+    if (!origin || !destination) {
         var error = new Error('No origin or destination provided');
         error.code = '490';
         return cb(error, identifier);
     }
 
     //Temporary protection for backwards compatibility - lots of places calling with origin as an address string
-    if(typeof origin !== 'string') {
+    if (typeof origin !== 'string') {
 
         //Origin is order object w/ customer_address object
-        if(origin.customer_address) {
+        if (origin.customer_address) {
             address = origin.customer_address;
             var zipcode = address.zip;
             var country = supportedCountry(zipcode);
-            if (!country || country.length < 1)
-            {
+            if (!country || country.length < 1) {
                 var error = new Error('Country not supported for directions');
                 error.code = '400';
                 return cb(error);
@@ -168,10 +158,10 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
             addressStr = addressStr + ', ' + country;
             orig = addressStr;
 
-        //Origin is lat/lng object
-        } else if(origin.lat && origin.lng) {
+            //Origin is lat/lng object
+        } else if (origin.lat && origin.lng) {
             orig = origin.lat + ',' + origin.lng;
-        }  else {
+        } else {
             var error = new Error('Provided origin is not valid');
             error.code = '490';
             return cb(error, identifier);
@@ -179,10 +169,9 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
         //Origin is an address string
     } else {
         var components = origin.split(' ');
-        var zipcode = components[components.length-1];
+        var zipcode = components[components.length - 1];
         var country = supportedCountry(zipcode);
-        if (!country || country.length < 1)
-        {
+        if (!country || country.length < 1) {
             var error = new Error('Country not supported for directions');
             error.code = '400';
             return cb(error);
@@ -191,40 +180,34 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
     }
 
 
-    limiter.removeTokens(1, function(err, remainingRequests)
-    {
+    limiter.removeTokens(1, function(err, remainingRequests) {
         var params = {
             origin: orig,
             destination: dest + ', ' + country,
             region: country
         };
-        if (waypoints)
-        {
+        if (waypoints) {
             var locations = "optimize:true";
-            waypoints.forEach(function(waypoint)
-            {
+            waypoints.forEach(function(waypoint) {
                 locations = locations + "|" + waypoint;
             });
             params.waypoints = locations;
         }
-        
+
         if (date) params.departureTime = date;
 
-        gm.directions(params, function(err, result)
-        {
+        gm.directions(params, function(err, result) {
             if (err) return cb(err);
 
-            if (result.status == "OVER_QUERY_LIMIT")
-            {
+            if (result.status == "OVER_QUERY_LIMIT") {
                 var error = new Error('Reached Google Maps API limit');
                 error.code = '490';
                 return cb(error, identifier);
             }
-            
+
             if (result.status != "OK" ||
                 !result.routes || result.routes.length < 1 ||
-                !result.routes[0].legs || result.routes[0].legs.length < 1)
-            {   
+                !result.routes[0].legs || result.routes[0].legs.length < 1) {
                 var error = new Error('Could not get directions with Google Maps');
                 error.code = '490';
                 return cb(error, identifier);
@@ -235,4 +218,39 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
             cb(err, returnObj);
         });
     });
+
+    //Calls Google Maps Distance Matrix API
+    exports.distanceMatrix = function(origins, destinations, cb) {
+        if (!origins.length || !destinations.length) {
+            var error = new Error('No origins or destinations provided');
+            error.code = '490';
+            return cb(error, identifier);
+        }
+
+        limiter.removeTokens(1, function(err, remainingRequests) {
+            var params = {
+                origins: origins,
+                destinations: destinations,
+            };
+
+            gm.distance(params, function(err, result) {
+                if (err) return cb(err);
+
+                if (result.status == "OVER_QUERY_LIMIT") {
+                    var error = new Error('Reached Google Maps API limit');
+                    error.code = '490';
+                    return cb(error, identifier);
+                }
+
+                if (result.status != "OK" ||
+                    !result.rows || result.rows.length < 1) {
+                    var error = new Error('Could not get directions with Google Maps');
+                    error.code = '490';
+                    return cb(error, identifier);
+                }
+
+                cb(err, result);
+            });
+        });
+    };
 };
