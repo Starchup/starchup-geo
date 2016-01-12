@@ -134,55 +134,60 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
     if (!origin || !destination) {
         error = new Error('No origin or destination provided');
         error.code = '490';
-        return cb(error, identifier);
+        return Promise.reject(error);
     }
 
     orig = formatLocation(origin);
     dest = formatLocation(destination);
 
-    if (orig instanceof Error) return cb(orig);
-    if (dest instanceof Error) return cb(dest);
+    //If error, reject
+    if (orig instanceof Error) return Promise.reject(orig);
+    if (dest instanceof Error) return Promise.reject(dest);
 
-    limiter.removeTokens(1, function(err, remainingRequests) {
-        var params = {
-            origin: orig.string,
-            destination: dest.string,
-            region: orig.country
-        };
+    return new Promise(function(resolve, reject) {
+        limiter.removeTokens(1, function(err, remainingRequests) {
+            var params = {
+                origin: orig.string,
+                destination: dest.string,
+                region: orig.country
+            };
 
-        if (waypoints) {
-            var locations = "optimize:true";
-            waypoints.forEach(function(waypoint) {
-                locations = locations + "|" + waypoint;
+            if (waypoints) {
+                var locations = "optimize:true";
+                waypoints.forEach(function(waypoint) {
+                    locations = locations + "|" + waypoint;
+                });
+                params.waypoints = locations;
+            }
+
+            if (date) params.departureTime = date;
+
+            gm.directions(params, function(err, result) {
+                // if (err) return cb(err);
+                if (err) reject(err);
+
+                if (result.status == "OVER_QUERY_LIMIT") {
+                    error = new Error('Reached Google Maps API limit');
+                    error.code = '490';
+                    reject(error);
+                }
+
+                if (result.status != "OK" ||
+                    !result.routes || result.routes.length < 1 ||
+                    !result.routes[0].legs || result.routes[0].legs.length < 1) {
+                    error = new Error('Could not get directions with Google Maps');
+                    error.code = '490';
+                    reject(error);
+                }
+
+                var returnObj = {};
+                returnObj[id] = result.routes[0];
+                // cb(err, returnObj);
+                resolve(returnObj);
             });
-            params.waypoints = locations;
-        }
-
-        if (date) params.departureTime = date;
-
-        gm.directions(params, function(err, result) {
-            if (err) return cb(err);
-
-            if (result.status == "OVER_QUERY_LIMIT") {
-                error = new Error('Reached Google Maps API limit');
-                error.code = '490';
-                return cb(error, identifier);
-            }
-
-            if (result.status != "OK" ||
-                !result.routes || result.routes.length < 1 ||
-                !result.routes[0].legs || result.routes[0].legs.length < 1) {
-                error = new Error('Could not get directions with Google Maps');
-                error.code = '490';
-                return cb(error, identifier);
-            }
-
-            var returnObj = {};
-            returnObj[id] = result.routes[0];
-            cb(err, returnObj);
         });
     });
-}
+};
 
 //Calls Google Maps Distance Matrix API
 exports.distanceMatrix = function(origins, destinations, cb) {
