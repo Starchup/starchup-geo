@@ -128,64 +128,28 @@ exports.geocode = function(identifier, address, cb) {
 exports.directions = function(identifier, origin, destination, waypoints, date, cb) {
     var id = identifier;
     var orig;
+    var error;
     var dest = destination;
 
     if (!origin || !destination) {
-        var error = new Error('No origin or destination provided');
+        error = new Error('No origin or destination provided');
         error.code = '490';
         return cb(error, identifier);
     }
 
-    //Temporary protection for backwards compatibility - lots of places calling with origin as an address string
-    if (typeof origin !== 'string') {
+    orig = formatLocation(origin);
+    dest = formatLocation(destination);
 
-        //Origin is order object w/ customer_address object
-        if (origin.customer_address) {
-            address = origin.customer_address;
-            var zipcode = address.zip;
-            var country = supportedCountry(zipcode);
-            if (!country || country.length < 1) {
-                var error = new Error('Country not supported for directions');
-                error.code = '400';
-                return cb(error);
-            }
-            //stringify customer address
-            var addressStr = address.street;
-            if (address.unit) addressStr = addressStr + ' ' + address.unit;
-            addressStr = addressStr + ', ' + address.city;
-            if (address.state) addressStr = addressStr + ' ' + address.state;
-            addressStr = addressStr + ' ' + address.zip;
-            addressStr = addressStr + ', ' + country;
-            orig = addressStr;
-
-            //Origin is lat/lng object
-        } else if (origin.lat && origin.lng) {
-            orig = origin.lat + ',' + origin.lng;
-        } else {
-            var error = new Error('Provided origin is not valid');
-            error.code = '490';
-            return cb(error, identifier);
-        }
-        //Origin is an address string
-    } else {
-        var components = origin.split(' ');
-        var zipcode = components[components.length - 1];
-        var country = supportedCountry(zipcode);
-        if (!country || country.length < 1) {
-            var error = new Error('Country not supported for directions');
-            error.code = '400';
-            return cb(error);
-        }
-        orig = origin + ', ' + country;
-    }
-
+    if (orig instanceof Error) return cb(orig);
+    if (dest instanceof Error) return cb(dest);
 
     limiter.removeTokens(1, function(err, remainingRequests) {
         var params = {
-            origin: orig,
-            destination: dest + ', ' + country,
-            region: country
+            origin: orig.string,
+            destination: dest.string,
+            region: orig.country
         };
+
         if (waypoints) {
             var locations = "optimize:true";
             waypoints.forEach(function(waypoint) {
@@ -200,7 +164,7 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
             if (err) return cb(err);
 
             if (result.status == "OVER_QUERY_LIMIT") {
-                var error = new Error('Reached Google Maps API limit');
+                error = new Error('Reached Google Maps API limit');
                 error.code = '490';
                 return cb(error, identifier);
             }
@@ -208,7 +172,7 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
             if (result.status != "OK" ||
                 !result.routes || result.routes.length < 1 ||
                 !result.routes[0].legs || result.routes[0].legs.length < 1) {
-                var error = new Error('Could not get directions with Google Maps');
+                error = new Error('Could not get directions with Google Maps');
                 error.code = '490';
                 return cb(error, identifier);
             }
@@ -218,7 +182,7 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
             cb(err, returnObj);
         });
     });
-};
+}
 
 //Calls Google Maps Distance Matrix API
 exports.distanceMatrix = function(origins, destinations, cb) {
@@ -259,3 +223,82 @@ exports.distanceMatrix = function(origins, destinations, cb) {
         });
     });
 };
+
+/**
+ * Formatting helper functions
+ */
+
+//Formats various inputs into an object with an address string and an optional country property
+function formatLocation(location) {
+    //location is an address string
+    if (typeof location == 'string') return addressStringWithCountry(location);
+
+    //location is a lat/lng object
+    if (location.lat && location.lng) {
+        var locObj = {};
+        locObj.string = location.lat + ',' + location.lng;
+        return locObj;
+    }
+
+    //location is address object
+    if (location.street) return addressObjectToString(location);
+
+    //location is an order w/ address
+    if (location.customer_address) return addressObjectToString(location.customer_address);
+
+    //If none of the above, error
+    var error = new Error('Location is not a valid type');
+    error.code = '490';
+    return error;
+}
+
+//Returns object with address string and country
+function addressObjectToString(object) {
+    var error;
+    var address = object;
+    var zipcode = address.zip;
+    var country = supportedCountry(zipcode);
+    var returnObj = {};
+
+    if (!country || country.length < 1) {
+        error = new Error('Country not supported for directions');
+        error.code = '400';
+        return error;
+    }
+
+    //Stringify customer address
+    var addressStr = address.street;
+    if (address.unit) addressStr = addressStr + ' ' + address.unit;
+    addressStr = addressStr + ', ' + address.city;
+    if (address.state) addressStr = addressStr + ' ' + address.state;
+    addressStr = addressStr + ' ' + address.zip;
+    addressStr = addressStr + ', ' + country;
+
+    returnObj.string = addressStr;
+    returnObj.country = country;
+    return returnObj;
+}
+
+//Returns object with address string and country
+function addressStringWithCountry(address) {
+    var error;
+    var returnObj = {};
+
+    var country = getCountryFromAddress(address);
+
+    if (!country || country.length < 1) {
+        error = new Error('Country not supported for directions');
+        error.code = '400';
+        return error
+    }
+    returnObj.string = address + ', ' + country;
+    returnObj.country = country;
+    return returnObj;
+}
+
+//Get country from an address string with zipcode
+function getCountryFromAddress(address) {
+    var components = address.split(' ');
+    var zipcode = components[components.length - 1];
+    return supportedCountry(zipcode);
+}
