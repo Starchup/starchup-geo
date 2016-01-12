@@ -218,15 +218,19 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
             cb(err, returnObj);
         });
     });
+};
 
-    //Calls Google Maps Distance Matrix API
-    exports.distanceMatrix = function(origins, destinations, cb) {
-        if (!origins.length || !destinations.length) {
-            var error = new Error('No origins or destinations provided');
-            error.code = '490';
-            return cb(error, identifier);
-        }
+//Calls Google Maps Distance Matrix API
+exports.distanceMatrix = function(origins, destinations, cb) {
+    var error;
 
+    if (!origins.length || !destinations.length) {
+        error = new Error('No origins or destinations provided');
+        error.code = '490';
+        return Promise.reject(error);
+    }
+
+    return new Promise(function(resolve, reject) {
         limiter.removeTokens(1, function(err, remainingRequests) {
             var params = {
                 origins: origins,
@@ -234,23 +238,24 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
             };
 
             gm.distance(params, function(err, result) {
-                if (err) return cb(err);
+                if (err) reject(err);
 
                 if (result.status == "OVER_QUERY_LIMIT") {
-                    var error = new Error('Reached Google Maps API limit');
+                    error = new Error('Reached Google Maps API limit');
                     error.code = '490';
-                    return cb(error, identifier);
+                    reject(error);
                 }
 
                 if (result.status != "OK" ||
-                    !result.rows || result.rows.length < 1) {
-                    var error = new Error('Could not get directions with Google Maps');
+                    !result.rows || result.rows.length < 1 ||
+                    !result.rows[0].elements || result.rows[0].elements.length < 1) {
+                    error = new Error('Could not get directions with Google Maps');
                     error.code = '490';
-                    return cb(error, identifier);
+                    reject(error);
                 }
 
-                cb(err, result);
+                resolve(result);
             });
         });
-    };
+    });
 };
