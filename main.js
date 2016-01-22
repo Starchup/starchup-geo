@@ -101,6 +101,12 @@ exports.geocode = function(identifier, address, cb) {
             }
 
             if (result.status != "OK" || result.results.length < 1) {
+                if (isDev()) {
+                    console.log('\nStatus: ' + result.status);
+                    console.log('\nResult: ');
+                    console.log(result.results);
+                }
+
                 var error = new Error('Could not create address with Google Maps');
                 error.code = '490';
                 return cb(error, identifier);
@@ -163,7 +169,6 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
             if (date) params.departureTime = date;
 
             gm.directions(params, function(err, result) {
-                // if (err) return cb(err);
                 if (err) reject(err);
 
                 if (result.status == "OVER_QUERY_LIMIT") {
@@ -175,6 +180,13 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
                 if (result.status != "OK" ||
                     !result.routes || result.routes.length < 1 ||
                     !result.routes[0].legs || result.routes[0].legs.length < 1) {
+
+                    if (isDev()) {
+                        console.log('\nStatus: ' + result.status);
+                        console.log('\nResult: ');
+                        console.log(result.routes);
+                    }
+
                     error = new Error('Could not get directions with Google Maps');
                     error.code = '490';
                     reject(error);
@@ -182,7 +194,6 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
 
                 var returnObj = {};
                 returnObj[id] = result.routes[0];
-                // cb(err, returnObj);
                 resolve(returnObj);
             });
         });
@@ -218,6 +229,12 @@ exports.distanceMatrix = function(origins, destinations, cb) {
                 if (result.status != "OK" ||
                     !result.rows || result.rows.length < 1 ||
                     !result.rows[0].elements || result.rows[0].elements.length < 1) {
+                    if (isDev()) {
+                        console.log('\nStatus: ' + result.status);
+                        console.log('\nResult: ');
+                        console.log(result.rows);
+                    }
+
                     error = new Error('Could not get directions with Google Maps');
                     error.code = '490';
                     reject(error);
@@ -306,4 +323,9 @@ function getCountryFromAddress(address) {
     var components = address.split(' ');
     var zipcode = components[components.length - 1];
     return supportedCountry(zipcode);
+}
+
+function isDev() {
+    if (process.env.NODE_ENV == 'dev') return true;
+    else return false;
 }
