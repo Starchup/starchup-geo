@@ -73,6 +73,7 @@ exports.cityForZip = function(zipcode, cb) {
  * return {identifier: coordinates}
  */
 exports.geocode = function(identifier, address, cb) {
+    var errorCount = 0;
     var components = address.split(' ');
     var zipcode = components[components.length - 1];
     var country = supportedCountry(zipcode);
@@ -91,8 +92,16 @@ exports.geocode = function(identifier, address, cb) {
             "language": "en",
             "region": country
         };
-        gm.geocode(params, function(err, result) {
-            if (err) return cb(err);
+        gm.geocode(params, processGeocode);
+
+        function processGeocode(err, result) {
+            if (err) {
+                if (isDev()) console.log(err);
+                errorCount++;
+
+                if (errorCount > 1) return cb(err);
+                else gm.geocode(params, processGeocode);
+            }
 
             if (result.status == "OVER_QUERY_LIMIT") {
                 var error = new Error('Reached Google Maps API limit');
@@ -115,7 +124,7 @@ exports.geocode = function(identifier, address, cb) {
             var returnObj = {};
             returnObj[id] = result.results[0].geometry.location;
             cb(err, returnObj);
-        });
+        }
     });
 };
 
@@ -135,6 +144,7 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
     var id = identifier;
     var orig;
     var error;
+    var errorCount = 0;
     var dest = destination;
 
     if (!origin || !destination) {
@@ -168,8 +178,17 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
 
             if (date) params.departureTime = date;
 
-            gm.directions(params, function(err, result) {
-                if (err) reject(err);
+            gm.directions(params, processDirections);
+
+            function processDirections(err, result) {
+                if (err) {
+                    if (isDev()) console.log(err);
+                    errorCount++;
+
+                    //If there an error, try again, but only twice
+                    if (errorCount > 1) reject(err);
+                    else gm.directions(params, processDirections);
+                }
 
                 if (result.status == "OVER_QUERY_LIMIT") {
                     error = new Error('Reached Google Maps API limit');
@@ -195,7 +214,8 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
                 var returnObj = {};
                 returnObj[id] = result.routes[0];
                 resolve(returnObj);
-            });
+            }
+
         });
     });
 };
@@ -203,6 +223,7 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
 //Calls Google Maps Distance Matrix API
 exports.distanceMatrix = function(origins, destinations, cb) {
     var error;
+    var errorCount = 0;
 
     if (!origins.length || !destinations.length) {
         error = new Error('No origins or destinations provided');
@@ -217,8 +238,17 @@ exports.distanceMatrix = function(origins, destinations, cb) {
                 destinations: destinations,
             };
 
-            gm.distance(params, function(err, result) {
-                if (err) reject(err);
+            gm.distance(params, processDistance);
+
+            function processDistance(err, result) {
+                if (err) {
+                    if (isDev()) console.log(err);
+                    errorCount++;
+
+                    //If there an error, try again, but only twice
+                    if (errorCount > 1) reject(err);
+                    else gm.distance(params, processDirections);
+                }
 
                 if (result.status == "OVER_QUERY_LIMIT") {
                     error = new Error('Reached Google Maps API limit');
@@ -241,7 +271,7 @@ exports.distanceMatrix = function(origins, destinations, cb) {
                 }
 
                 resolve(result);
-            });
+            }
         });
     });
 };
