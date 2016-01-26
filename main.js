@@ -96,7 +96,16 @@ exports.geocode = function(identifier, address, cb) {
 
         function processGeocode(err, result) {
             if (err) {
-                if (isDev()) console.log(err);
+                if (isDev()) {
+                    console.log(err);
+                    console.log('\nPassed arguments: ');
+                    console.log('\nIdentifier');
+                    console.log(identifier);
+                    console.log('\nAddress:');
+                    console.log(address);
+                    console.log('\nGoogle params');
+                    console.log(params);
+                }
                 errorCount++;
 
                 if (errorCount > 1) return cb(err);
@@ -182,7 +191,20 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
 
             function processDirections(err, result) {
                 if (err) {
-                    if (isDev()) console.log(err);
+                    if (isDev()) {
+                        console.log(err);
+                        console.log('\nPassed arguments: ');
+                        console.log('\nOrigin:');
+                        console.log(origin);
+                        console.log('\nDestination:');
+                        console.log(destination);
+                        console.log('\nWaypoints');
+                        console.log(waypoints);
+                        console.log('\nDate');
+                        console.log(date);
+                        console.log('\nGoogle params');
+                        console.log(params);
+                    }
                     errorCount++;
 
                     //If there an error, try again, but only twice
@@ -242,7 +264,16 @@ exports.distanceMatrix = function(origins, destinations, cb) {
 
             function processDistance(err, result) {
                 if (err) {
-                    if (isDev()) console.log(err);
+                    if (isDev()) {
+                        console.log(err);
+                        console.log('\nPassed arguments: ');
+                        console.log('\nOrigins:');
+                        console.log(origins);
+                        console.log('\nDestinations:');
+                        console.log(destinations);
+                        console.log('\nGoogle params');
+                        console.log(params);
+                    }
                     errorCount++;
 
                     //If there an error, try again, but only twice
