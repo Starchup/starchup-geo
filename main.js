@@ -123,6 +123,14 @@ exports.geocode = function(identifier, address, cb) {
                     console.log('\nStatus: ' + result.status);
                     console.log('\nResult: ');
                     console.log(result.results);
+
+                    console.log('\nPassed arguments: ');
+                    console.log('\nIdentifier');
+                    console.log(identifier);
+                    console.log('\nAddress:');
+                    console.log(address);
+                    console.log('\nGoogle params');
+                    console.log(params);
                 }
 
                 var error = new Error('Could not create address with Google Maps');
@@ -226,6 +234,18 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
                         console.log('\nStatus: ' + result.status);
                         console.log('\nResult: ');
                         console.log(result.routes);
+
+                        console.log('\nPassed arguments: ');
+                        console.log('\nOrigin:');
+                        console.log(origin);
+                        console.log('\nDestination:');
+                        console.log(destination);
+                        console.log('\nWaypoints');
+                        console.log(waypoints);
+                        console.log('\nDate');
+                        console.log(date);
+                        console.log('\nGoogle params');
+                        console.log(params);
                     }
 
                     error = new Error('Could not get directions with Google Maps');
@@ -294,6 +314,14 @@ exports.distanceMatrix = function(origins, destinations, cb) {
                         console.log('\nStatus: ' + result.status);
                         console.log('\nResult: ');
                         console.log(result.rows);
+
+                        console.log('\nPassed arguments: ');
+                        console.log('\nOrigins:');
+                        console.log(origins);
+                        console.log('\nDestinations:');
+                        console.log(destinations);
+                        console.log('\nGoogle params');
+                        console.log(params);
                     }
 
                     error = new Error('Could not get directions with Google Maps');
