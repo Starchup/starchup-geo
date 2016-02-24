@@ -146,6 +146,128 @@ exports.geocode = function(identifier, address, cb) {
 };
 
 /**
+ * Reverse Geocode an coordinates to an address
+ *
+ * param {identifier}       Identifier provided to return with the location
+ * param {latLng}           Lat and Lng coordinates to geocode
+ * param {options}          (Optional) options object
+ *       param {result_types}          (Optional) array of Google result_types
+ *       param {location_types}        (Optional) array of Google location_types.  Defaults to 'ROOFTOP' (address);
+ *       param {language}              (Optional) language, defaults to 'en'
+ *      
+ *      Learn more about about Goolge reverse geocoding parameters:
+ *      https://developers.google.com/maps/documentation/geocoding/intro#ReverseGeocoding
+ *
+ * return {identifier: identifier,
+ *          results: results}
+ *
+ *  This function allows an empty array to be returned as a non-error result.  Any function calling this must account for that possibility.
+ */
+exports.reverseGeocode = function(identifier, location, options) {
+    var errorCount = 0;
+    var id = identifier;
+    if (!options) options = {};
+
+    var latLng = formatLocation(location).string;
+
+    return new Promise(function(resolve, reject) {
+
+        limiter.removeTokens(1, function(err, remainingRequests) {
+
+            var params = {
+                'latlng': latLng,
+                'language': 'en' || options.language,
+                'location_type': 'ROOFTOP'
+            };
+
+            if (options.result_types) {
+                var result_type = "";
+                options.result_types.forEach(function(type, idx) {
+                    if (idx > 0) result_type += '|';
+                    result_type += type;
+                });
+                params.result_type = result_type;
+            }
+
+            if (options.location_types) {
+                var result_type = "";
+                options.location_types.forEach(function(type, idx) {
+                    if (idx > 0) location_type += '|';
+                    location_type += type;
+                });
+                params.location_type = result_type;
+            }
+
+            gm.reverseGeocode(params, processGeocode);
+
+            function processGeocode(err, result) {
+                if (err) {
+                    if (isDev()) {
+                        console.log(err);
+                        console.log('\nPassed arguments: ');
+                        console.log('\nIdentifier');
+                        console.log(identifier);
+                        console.log('\nLocation');
+                        console.log(location);
+                        console.log('\nOptions');
+                        console.log(options);
+                        console.log('\nGoogle params');
+                        console.log(params);
+                    }
+                    errorCount++;
+
+                    if (errorCount > 1) reject(err);
+                    else gm.geocode(params, processGeocode);
+                }
+
+                if (result.status == "OVER_QUERY_LIMIT") {
+                    var error = new Error('Reached Google Maps API limit');
+                    error.code = '490';
+                    reject(error);
+                }
+
+                //Allow empty result array
+                if (result.status == 'ZERO_RESULTS') {
+                    var returnObj = {};
+                    returnObj.identifier = identifier;
+                    returnObj.results = result.results;
+                    return resolve(returnObj);
+                }
+
+                if (result.status != "OK" || result.results.length < 1) {
+                    if (isDev()) {
+                        console.log('\nStatus: ' + result.status);
+                        console.log('\nResult: ');
+                        console.log(result.results);
+
+                        console.log('\nPassed arguments: ');
+                        console.log('\nIdentifier');
+                        console.log(identifier);
+                        console.log('\nLocation');
+                        console.log(location);
+                        console.log('\nOptions');
+                        console.log(options);
+                        console.log('\nGoogle params');
+                        console.log(params);
+                    }
+
+                    var error = new Error('Could not create address with Google Maps');
+                    error.code = '490';
+                    reject(error);
+                }
+
+                var returnObj = {};
+                returnObj.identifier = identifier;
+                returnObj.results = result.results;
+                return resolve(returnObj);
+            }
+        });
+    });
+};
+
+
+
+/**
  * Get the directions to travel between origin and destionation,
  * optionally providing a set of waypoints.
  *
@@ -172,6 +294,10 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
 
     orig = formatLocation(origin);
     dest = formatLocation(destination);
+
+    waypoints = waypoints.map(function(wp) {
+        return formatLocation(wp).string;
+    });
 
     //If error, reject
     if (orig instanceof Error) return Promise.reject(orig);
@@ -344,18 +470,25 @@ function formatLocation(location) {
     //location is an address string
     if (typeof location == 'string') return addressStringWithCountry(location);
 
-    //location is a lat/lng object
+    //Location is a facility or order
+    if (location.postal_address) location = location.postal_address;
+    if (location.customer_address) location = location.customer_address;
+    if (location.address) location = location.address;
+
+    //location is address object
+    if (location.street) return addressObjectToString(location);
+
+
+    //Get to lowerst location object/relation
+    while (location.location) {
+        location = location.location
+    }
+
     if (location.lat && location.lng) {
         var locObj = {};
         locObj.string = location.lat + ',' + location.lng;
         return locObj;
     }
-
-    //location is address object
-    if (location.street) return addressObjectToString(location);
-
-    //location is an order w/ address
-    if (location.customer_address) return addressObjectToString(location.customer_address);
 
     //If none of the above, error
     var error = new Error('Location is not a valid type');
@@ -415,6 +548,5 @@ function getCountryFromAddress(address) {
 }
 
 function isDev() {
-    if (process.env.NODE_ENV == 'dev') return true;
-    else return false;
+    return (process.env.NODE_ENV == 'dev');
 }
