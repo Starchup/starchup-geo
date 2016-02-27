@@ -279,7 +279,7 @@ exports.reverseGeocode = function(identifier, location, options) {
  *
  * return {identifier: directions}
  */
-exports.directions = function(identifier, origin, destination, waypoints, date, cb) {
+exports.directions = function(identifier, origin, destination, waypoints, date, manualRoute) {
     var id = identifier;
     var orig;
     var error;
@@ -312,7 +312,10 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
             };
 
             if (waypoints) {
-                var locations = "optimize:true";
+                var locations;
+                if (!manualRoute) locations = "optimize:true";
+                else locations = "optimize:false";
+
                 waypoints.forEach(function(waypoint) {
                     locations = locations + "|" + waypoint;
                 });
