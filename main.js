@@ -85,65 +85,68 @@ exports.geocode = function(identifier, address, cb) {
         return cb(error);
     }
 
-    var id = identifier;
-    var add = address;
-    limiter.removeTokens(1, function(err, remainingRequests) {
-        var params = {
-            "address": add,
-            "components": "components=country:" + country,
-            "language": "en",
-            "region": country
-        };
-        gm.geocode(params, processGeocode);
+    return new Promise(function(resolve, reject) {
 
-        function processGeocode(err, result) {
-            if (err) {
-                if (isDev()) {
-                    console.log(err);
-                    console.log('\nPassed arguments: ');
-                    console.log('\nIdentifier');
-                    console.log(identifier);
-                    console.log('\nAddress:');
-                    console.log(address);
-                    console.log('\nGoogle params');
-                    console.log(params);
-                }
-                errorCount++;
+        var id = identifier;
+        var add = address;
+        limiter.removeTokens(1, function(err, remainingRequests) {
+            var params = {
+                "address": add,
+                "components": "components=country:" + country,
+                "language": "en",
+                "region": country
+            };
+            gm.geocode(params, processGeocode);
 
-                if (errorCount > 1) return cb(err);
-                else gm.geocode(params, processGeocode);
-            }
+            function processGeocode(err, result) {
+                if (err) {
+                    if (isDev()) {
+                        console.log(err);
+                        console.log('\nPassed arguments: ');
+                        console.log('\nIdentifier');
+                        console.log(identifier);
+                        console.log('\nAddress:');
+                        console.log(address);
+                        console.log('\nGoogle params');
+                        console.log(params);
+                    }
+                    errorCount++;
 
-            if (result.status == "OVER_QUERY_LIMIT") {
-                var error = new Error('Reached Google Maps API limit');
-                error.code = '490';
-                return cb(error, identifier);
-            }
-
-            if (result.status != "OK" || result.results.length < 1) {
-                if (isDev()) {
-                    console.log('\nStatus: ' + result.status);
-                    console.log('\nResult: ');
-                    console.log(result.results);
-
-                    console.log('\nPassed arguments: ');
-                    console.log('\nIdentifier');
-                    console.log(identifier);
-                    console.log('\nAddress:');
-                    console.log(address);
-                    console.log('\nGoogle params');
-                    console.log(params);
+                    if (errorCount > 1) return reject(err);
+                    else gm.geocode(params, processGeocode);
                 }
 
-                var error = new Error('Could not create address with Google Maps');
-                error.code = '490';
-                return cb(error, identifier);
-            }
+                if (result.status == "OVER_QUERY_LIMIT") {
+                    var error = new Error('Reached Google Maps API limit');
+                    error.code = '490';
+                    return reject(error);
+                }
 
-            var returnObj = {};
-            returnObj[id] = result.results[0].geometry.location;
-            cb(err, returnObj);
-        }
+                if (result.status != "OK" || result.results.length < 1) {
+                    if (isDev()) {
+                        console.log('\nStatus: ' + result.status);
+                        console.log('\nResult: ');
+                        console.log(result.results);
+
+                        console.log('\nPassed arguments: ');
+                        console.log('\nIdentifier');
+                        console.log(identifier);
+                        console.log('\nAddress:');
+                        console.log(address);
+                        console.log('\nGoogle params');
+                        console.log(params);
+                    }
+
+                    var error = new Error('Could not create address with Google Maps');
+                    error.code = '490';
+                    return reject(error);
+                }
+
+                var returnObj = {};
+                returnObj[id] = result.results[0].geometry.location;
+                resolve(returnObj);
+            }
+        });
     });
 };
 
