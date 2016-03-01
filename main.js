@@ -8,6 +8,8 @@ var gm = new GoogleMapsAPI({
     key: process.env.GOOGLE_GEO_KEY
 });
 
+var geolib = require('geolib');
+
 /**
  * Utility to support various countries
  */
@@ -463,6 +465,46 @@ exports.distanceMatrix = function(origins, destinations, cb) {
         });
     });
 };
+
+
+/**
+ * Determine whether a lat/lng point is inside a polygon
+ * 
+ *
+ * param {point}        Required. A geopoint or latitude/longitude object
+ * param {coords}       Required. An array of {latitude: , longitude: } objects
+ *
+ * return {bool}
+ */
+exports.pointInPolygon = function(point, coords) {
+    var latlng;
+    if (point.lat && point.lng) {
+        latlng = {
+            latitude: point.lat,
+            longitude: point.lng
+        };
+    } else if (point.latitude && point.longitude) {
+        point = point;
+    } else {
+        error = new Error('Point must have latitude and longitude');
+        error.code = '490';
+        return error;
+    }
+
+    //Format to geolib required format
+    var formattedCoords = coords.forEach(function(coord) {
+        if (coord.lat && coord.lng) {
+            return {
+                latitude: coord.lat,
+                longitude: coord.lng
+            };
+        } else if (coord.latitude && coord.longitude) {
+            return coord;
+        }
+    });
+    return geolib.isPointInside(latlng, coords);
+}
+
 
 /**
  * Formatting helper functions
