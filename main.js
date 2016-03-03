@@ -481,12 +481,12 @@ exports.distanceMatrix = function(origins, destinations, cb) {
  */
 exports.pointInPolygon = function(point, coords) {
     var latlng;
-    if (point.lat && point.lng) {
+    if (exists(point.lat) && exists(point.lng)) {
         latlng = {
             latitude: point.lat,
             longitude: point.lng
         };
-    } else if (point.latitude && point.longitude) {
+    } else if (exists(point.latitude) && exists(point.longitude)) {
         point = point;
     } else {
         error = new Error('Point must have latitude and longitude');
@@ -496,12 +496,12 @@ exports.pointInPolygon = function(point, coords) {
 
     //Format to geolib required format
     var formattedCoords = coords.forEach(function(coord) {
-        if (coord.lat && coord.lng) {
+        if (exists(coord.lat) && exists(coord.lng)) {
             return {
                 latitude: coord.lat,
                 longitude: coord.lng
             };
-        } else if (coord.latitude && coord.longitude) {
+        } else if (exists(coord.latitude) && exists(coord.longitude)) {
             return coord;
         }
     });
@@ -532,7 +532,7 @@ function formatLocation(location) {
         location = location.location
     }
 
-    if (location.lat && location.lng) {
+    if (exists(location.lat) && exists(location.lng)) {
         var locObj = {};
         locObj.string = location.lat + ',' + location.lng;
         return locObj;
@@ -597,4 +597,8 @@ function getCountryFromAddress(address) {
 
 function isDev() {
     return (process.env.NODE_ENV == 'dev');
+}
+
+function exists(val) {
+    return val !== undefined && val !== null;
 }
