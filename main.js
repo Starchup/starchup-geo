@@ -33,6 +33,16 @@ var supportedCountry = function(zipcode) {
 exports.SUPPORTED_COUNTRY = supportedCountry;
 
 /**
+ * Dictionary to convert country returned by Google Places Autofill to country code.
+ * Add countries as Starchup supports more.
+ */
+var countryCode = {
+    'United States': 'us',
+    'Canada': 'ca',
+    'South Africa': 'za',
+};
+
+/**
  * Get the city matched to a provided zipcode
  *
  * param {zipcode} the zipcode to match
@@ -74,21 +84,20 @@ exports.cityForZip = function(zipcode, cb) {
  *
  * return {identifier: coordinates}
  */
-exports.geocode = function(identifier, address, cb) {
-    var errorCount = 0;
-    var components = address.split(' ');
-    var zipcode = components[components.length - 1];
-    var country = supportedCountry(zipcode);
-    if (!country || country.length < 1) {
-        var error = new Error('Country not supported for geocoding');
-        error.code = '400';
-        return cb(error);
-    }
-
+exports.geocode = function(identifier, address) {
     return new Promise(function(resolve, reject) {
+        var errorCount = 0;
+
+        var country = countryCode[address.country];
+
+        if (!country || country.length < 1) {
+            var error = new Error('Country not supported for geocoding');
+            error.code = '400';
+            return reject(error);
+        }
 
         var id = identifier;
-        var add = address;
+        var add = formatLocation(address);
         limiter.removeTokens(1, function(err, remainingRequests) {
             var params = {
                 "address": add,
@@ -173,7 +182,7 @@ exports.reverseGeocode = function(identifier, location, options) {
     var id = identifier;
     if (!options) options = {};
 
-    var latLng = formatLocation(location).string;
+    var latLng = formatLocation(location);
 
     return new Promise(function(resolve, reject) {
 
@@ -195,12 +204,12 @@ exports.reverseGeocode = function(identifier, location, options) {
             }
 
             if (options.location_types) {
-                var result_type = "";
+                var location_type = "";
                 options.location_types.forEach(function(type, idx) {
                     if (idx > 0) location_type += '|';
                     location_type += type;
                 });
-                params.location_type = result_type;
+                params.location_type = location_type;
             }
 
             gm.reverseGeocode(params, processGeocode);
@@ -301,7 +310,7 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
     dest = formatLocation(destination);
 
     waypoints = waypoints.map(function(wp) {
-        return formatLocation(wp).string;
+        return formatLocation(wp);
     });
 
     //If error, reject
@@ -311,9 +320,9 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
     return new Promise(function(resolve, reject) {
         limiter.removeTokens(1, function(err, remainingRequests) {
             var params = {
-                origin: orig.string,
-                destination: dest.string,
-                region: orig.country
+                origin: orig,
+                destination: dest,
+                region: origin.country
             };
 
             if (waypoints) {
@@ -407,11 +416,23 @@ exports.distanceMatrix = function(origins, destinations, cb) {
         return Promise.reject(error);
     }
 
+    //Format for Google
+    var originStrings = origins.map(function(origin) {
+        return formatLocation(origin);
+    });
+
+    var destStrings = destinations.map(function(destination) {
+        return formatLocation(destination);
+    });
+
+    var theOrigins = originStrings.join('|');
+    var theDestinations = destStrings.join('|');
+
     return new Promise(function(resolve, reject) {
         limiter.removeTokens(1, function(err, remainingRequests) {
             var params = {
-                origins: origins,
-                destinations: destinations,
+                origins: theOrigins,
+                destinations: theDestinations,
             };
 
             gm.distance(params, processDistance);
@@ -481,6 +502,10 @@ exports.distanceMatrix = function(origins, destinations, cb) {
  */
 exports.pointInPolygon = function(point, coords) {
     var latlng;
+
+    //Accept geopoint object as well as Lat/Long object
+    if (point.location) point = point.location;
+
     if (exists(point.lat) && exists(point.lng)) {
         latlng = {
             latitude: point.lat,
@@ -494,8 +519,11 @@ exports.pointInPolygon = function(point, coords) {
         return error;
     }
 
+    //Accept points arrays and whole polygon objects
+    if (coords.points) coords = coords.points;
+
     //Format to geolib required format
-    var formattedCoords = coords.forEach(function(coord) {
+    var formattedCoords = coords.map(function(coord) {
         if (exists(coord.lat) && exists(coord.lng)) {
             return {
                 latitude: coord.lat,
@@ -505,7 +533,8 @@ exports.pointInPolygon = function(point, coords) {
             return coord;
         }
     });
-    return geolib.isPointInside(latlng, coords);
+
+    return geolib.isPointInside(latlng, formattedCoords);
 }
 
 
@@ -515,9 +544,6 @@ exports.pointInPolygon = function(point, coords) {
 
 //Formats various inputs into an object with an address string and an optional country property
 function formatLocation(location) {
-    //location is an address string
-    if (typeof location == 'string') return addressStringWithCountry(location);
-
     //Location is a facility or order
     if (location.postal_address) location = location.postal_address;
     if (location.customer_address) location = location.customer_address;
@@ -526,17 +552,14 @@ function formatLocation(location) {
     //location is address object
     if (location.street) return addressObjectToString(location);
 
-
     //Get to lowerst location object/relation
     while (location.location) {
         location = location.location
     }
 
-    if (exists(location.lat) && exists(location.lng)) {
-        var locObj = {};
-        locObj.string = location.lat + ',' + location.lng;
-        return locObj;
-    }
+    if (exists(location.lat) && exists(location.lng)) return location.lat + ',' + location.lng;
+
+    if (exists(location.latitude) && exists(location.longitude)) return location.latitude + ',' + location.longitude;
 
     //If none of the above, error
     var error = new Error('Location is not a valid type');
@@ -548,11 +571,11 @@ function formatLocation(location) {
 function addressObjectToString(object) {
     var error;
     var address = object;
-    var zipcode = address.zip;
-    var country = supportedCountry(zipcode);
+
+    var country = countryCode[address.country];
     var returnObj = {};
 
-    if (!country || country.length < 1) {
+    if (!country || country.length < 1) {;
         error = new Error('Country not supported for directions');
         error.code = '400';
         return error;
@@ -564,35 +587,15 @@ function addressObjectToString(object) {
     addressStr = addressStr + ', ' + address.city;
     if (address.state) addressStr = addressStr + ' ' + address.state;
     addressStr = addressStr + ' ' + address.zip;
-    addressStr = addressStr + ', ' + country;
 
-    returnObj.string = addressStr;
-    returnObj.country = country;
-    return returnObj;
-}
-
-//Returns object with address string and country
-function addressStringWithCountry(address) {
-    var error;
-    var returnObj = {};
-
-    var country = getCountryFromAddress(address);
-
-    if (!country || country.length < 1) {
-        error = new Error('Country not supported for directions');
-        error.code = '400';
-        return error
-    }
-    returnObj.string = address + ', ' + country;
-    returnObj.country = country;
-    return returnObj;
+    return addressStr;
 }
 
 //Get country from an address string with zipcode
 function getCountryFromAddress(address) {
     var components = address.split(' ');
-    var zipcode = components[components.length - 1];
-    return supportedCountry(zipcode);
+    var country = components[components.length - 1];
+    return countryCode[country];
 }
 
 function isDev() {
