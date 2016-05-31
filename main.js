@@ -90,6 +90,8 @@ exports.geocode = function(identifier, address) {
 
         var country = countryCode[address.country];
 
+        if (!country && address.zip) country = supportedCountry(address.zip);
+
         if (!country || country.length < 1) {
             var error = new Error('Country not supported for geocoding');
             error.code = '400';
@@ -122,7 +124,7 @@ exports.geocode = function(identifier, address) {
                     errorCount++;
 
                     if (errorCount > 1) return reject(err);
-                    else gm.geocode(params, processGeocode);
+                    else return gm.geocode(params, processGeocode);
                 }
 
                 if (result.status == "OVER_QUERY_LIMIT") {
@@ -230,14 +232,14 @@ exports.reverseGeocode = function(identifier, location, options) {
                     }
                     errorCount++;
 
-                    if (errorCount > 1) reject(err);
-                    else gm.geocode(params, processGeocode);
+                    if (errorCount > 1) return reject(err);
+                    else return gm.geocode(params, processGeocode);
                 }
 
                 if (result.status == "OVER_QUERY_LIMIT") {
                     var error = new Error('Reached Google Maps API limit');
                     error.code = '490';
-                    reject(error);
+                    return reject(error);
                 }
 
                 //Allow empty result array
@@ -267,7 +269,7 @@ exports.reverseGeocode = function(identifier, location, options) {
 
                     var error = new Error('Could not create address with Google Maps');
                     error.code = '490';
-                    reject(error);
+                    return reject(error);
                 }
 
                 var returnObj = {};
@@ -359,14 +361,14 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
                     errorCount++;
 
                     //If there an error, try again, but only twice
-                    if (errorCount > 1) reject(err);
-                    else gm.directions(params, processDirections);
+                    if (errorCount > 1) return reject(err);
+                    else return gm.directions(params, processDirections);
                 }
 
                 if (result.status == "OVER_QUERY_LIMIT") {
                     error = new Error('Reached Google Maps API limit');
                     error.code = '490';
-                    reject(error);
+                    return reject(error);
                 }
 
                 if (result.status != "OK" ||
@@ -393,12 +395,12 @@ exports.directions = function(identifier, origin, destination, waypoints, date, 
 
                     error = new Error('Could not get directions with Google Maps');
                     error.code = '490';
-                    reject(error);
+                    return reject(error);
                 }
 
                 var returnObj = {};
                 returnObj[id] = result.routes[0];
-                resolve(returnObj);
+                return resolve(returnObj);
             }
 
         });
@@ -452,14 +454,14 @@ exports.distanceMatrix = function(origins, destinations, cb) {
                     errorCount++;
 
                     //If there an error, try again, but only twice
-                    if (errorCount > 1) reject(err);
-                    else gm.distance(params, processDirections);
+                    if (errorCount > 1) return reject(err);
+                    else return gm.distance(params, processDirections);
                 }
 
                 if (result.status == "OVER_QUERY_LIMIT") {
                     error = new Error('Reached Google Maps API limit');
                     error.code = '490';
-                    reject(error);
+                    return reject(error);
                 }
 
                 if (result.status != "OK" ||
@@ -481,10 +483,10 @@ exports.distanceMatrix = function(origins, destinations, cb) {
 
                     error = new Error('Could not get directions with Google Maps');
                     error.code = '490';
-                    reject(error);
+                    return reject(error);
                 }
 
-                resolve(result);
+                return resolve(result);
             }
         });
     });
@@ -573,6 +575,7 @@ function addressObjectToString(object) {
     var address = object;
 
     var country = countryCode[address.country];
+    if (!country) country = supportedCountry(address.zip);
     var returnObj = {};
 
     if (!country || country.length < 1) {;

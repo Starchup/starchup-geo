@@ -1,6 +1,6 @@
 {
     "name": "starchup-geo",
-    "version": "0.3.17",
+    "version": "0.3.18",
     "main": "./main",
     "description": "Various required Starchup geo-related components",
     "author": {
