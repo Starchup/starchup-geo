@@ -15,7 +15,7 @@ var geolib = require('geolib');
  */
 var zipcodeFormats = {
     'us': "^[a-zA-Z0-9]{5}",
-    'za': "^[a-zA-Z0-9]{4}",
+    'za': "^[a-zA-Z0-9]{4}$",
     'ca': "^[a-zA-Z0-9]{3}( )[a-zA-Z0-9]{3}"
 };
 
