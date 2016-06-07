@@ -1,6 +1,6 @@
 {
     "name": "starchup-geo",
-    "version": "0.3.18",
+    "version": "0.3.19",
     "main": "./main",
     "description": "Various required Starchup geo-related components",
     "author": {
@@ -19,8 +19,7 @@
     "dependencies": {
         "googlemaps": "git+https://github.com/moshen/node-googlemaps.git",
         "limiter": "^1.x",
-        "node-zippopotamus": "^1.x",
-        "geolib": "^2.x"
+        "node-zippopotamus": "^1.x"
     },
     "scripts": {},
     "readmeFilename": "README.md",
