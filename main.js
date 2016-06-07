@@ -8,8 +8,6 @@ var gm = new GoogleMapsAPI({
     key: process.env.GOOGLE_GEO_KEY
 });
 
-var geolib = require('geolib');
-
 /**
  * Utility to support various countries
  */
@@ -536,7 +534,23 @@ exports.pointInPolygon = function(point, coords) {
         }
     });
 
-    return geolib.isPointInside(latlng, formattedCoords);
+    for (var c = false, i = -1, l = coords.length, j = l - 1; ++i < l; j = i) {
+        if (
+            (
+                (coords[i].longitude <= latlng.longitude && latlng.longitude < coords[j].longitude) ||
+                (coords[j].longitude <= latlng.longitude && latlng.longitude < coords[i].longitude)
+            ) &&
+            (
+                latlng.latitude < (coords[j].latitude - coords[i].latitude) *
+                (latlng.longitude - coords[i].longitude) /
+                (coords[j].longitude - coords[i].longitude) +
+                coords[i].latitude
+            )
+        ) {
+            c = !c;
+        }
+    }
+    return c;
 }
 
 
