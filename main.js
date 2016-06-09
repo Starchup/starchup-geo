@@ -495,8 +495,8 @@ exports.distanceMatrix = function(origins, destinations, cb) {
  * Determine whether a lat/lng point is inside a polygon
  * 
  *
- * param {point}        Required. A geopoint or latitude/longitude object
- * param {coords}       Required. An array of {latitude: , longitude: } objects
+ * param {point}        Required. A geopoint or lat/lng object
+ * param {coords}       Required. An array of {lat: , lng: } objects
  *
  * return {bool}
  */
@@ -508,13 +508,13 @@ exports.pointInPolygon = function(point, coords) {
 
     if (exists(point.lat) && exists(point.lng)) {
         latlng = {
-            latitude: point.lat,
-            longitude: point.lng
+            lat: point.lat,
+            lng: point.lng
         };
-    } else if (exists(point.latitude) && exists(point.longitude)) {
+    } else if (exists(point.lat) && exists(point.lng)) {
         point = point;
     } else {
-        error = new Error('Point must have latitude and longitude');
+        error = new Error('Point must have lat and lng');
         error.code = '490';
         return error;
     }
@@ -526,10 +526,10 @@ exports.pointInPolygon = function(point, coords) {
     var formattedCoords = coords.map(function(coord) {
         if (exists(coord.lat) && exists(coord.lng)) {
             return {
-                latitude: coord.lat,
-                longitude: coord.lng
+                lat: coord.lat,
+                lng: coord.lng
             };
-        } else if (exists(coord.latitude) && exists(coord.longitude)) {
+        } else if (exists(coord.lat) && exists(coord.lng)) {
             return coord;
         }
     });
@@ -537,14 +537,14 @@ exports.pointInPolygon = function(point, coords) {
     for (var c = false, i = -1, l = coords.length, j = l - 1; ++i < l; j = i) {
         if (
             (
-                (coords[i].longitude <= latlng.longitude && latlng.longitude < coords[j].longitude) ||
-                (coords[j].longitude <= latlng.longitude && latlng.longitude < coords[i].longitude)
+                (coords[i].lng <= latlng.lng && latlng.lng < coords[j].lng) ||
+                (coords[j].lng <= latlng.lng && latlng.lng < coords[i].lng)
             ) &&
             (
-                latlng.latitude < (coords[j].latitude - coords[i].latitude) *
-                (latlng.longitude - coords[i].longitude) /
-                (coords[j].longitude - coords[i].longitude) +
-                coords[i].latitude
+                latlng.lat < (coords[j].lat - coords[i].lat) *
+                (latlng.lng - coords[i].lng) /
+                (coords[j].lng - coords[i].lng) +
+                coords[i].lat
             )
         ) {
             c = !c;
