@@ -18,7 +18,7 @@ var zipcodeFormats = {
 };
 
 var supportedCountry = function(zipcode) {
-    if (!zipcode) return null;
+    if (!zipcode || zipcode === undefined) return cb();
 
     for (var countryCode in zipcodeFormats) {
         if (!zipcodeFormats.hasOwnProperty(countryCode)) continue;
@@ -87,9 +87,7 @@ exports.geocode = function(identifier, address) {
         var errorCount = 0;
 
         var country = countryCode[address.country];
-
         if (!country && address.zip) country = supportedCountry(address.zip);
-
         if (!country || country.length < 1) {
             var error = new Error('Country not supported for geocoding');
             error.code = '400';
