@@ -18,7 +18,7 @@ var zipcodeFormats = {
 };
 
 var supportedCountry = function(zipcode) {
-    if (!zipcode || zipcode === undefined) return cb();
+    if (!zipcode || zipcode === undefined) return null;
 
     for (var countryCode in zipcodeFormats) {
         if (!zipcodeFormats.hasOwnProperty(countryCode)) continue;
@@ -48,8 +48,6 @@ var countryCode = {
  * return city
  */
 exports.cityForZip = function(zipcode, cb) {
-    if (!zipcode) return null;
-
     var country = supportedCountry(zipcode);
     if (!country || country.length < 1) {
         var error = new Error('Zipcode format invalid or country not supported');
