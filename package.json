@@ -1,37 +1,37 @@
 {
-  "name": "starchup-geo",
-  "version": "1.0.3",
-  "main": "./main",
-  "description": "Various required Starchup geo-related components",
-  "author": {
-    "name": "Starchup Inc",
-    "email": "info@starchup.com",
-    "url": "http://starchup.com"
-  },
-  "keywords": [
-    "starchup"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/Starchup/starchup-geo"
-  },
-  "engines": {
-    "node": ">= 0.10"
-  },
-  "dependencies": {
-    "googlemaps": "git+https://github.com/moshen/node-googlemaps.git",
-    "limiter": "^1.x",
-    "node-zippopotamus": "^1.x"
-  },
-  "scripts": {},
-  "readmeFilename": "README.md",
-  "bugs": {
-    "url": "https://github.com/Starchup/starchup-geo/issues"
-  },
-  "homepage": "https://github.com/Starchup/starchup-geo",
-  "readme": "# Starchup Geo module\r\nVarious required Starchup geo-related components - best way to modularize the geocoding \r\nfunctionality for our sites.\r\n\r\n# Installation\r\n\r\n    npm install starchup-geo\r\n\r\n# Components:\r\n\r\n* City from Zipcode\r\n* Zipcode from location\r\n* Geocoder\r\n* Bulk Geocoder //TODO\r\n* Reverse-geocoder //TODO\r\n* Bulk Reverse-geocoder //TODO\r\n\r\n# Usage\r\n    var geo = require('starchup-geo');\r\n\r\n    geo.cityForZip(zipcode, function(err, city) {});\r\n    geo.zipForLocation({lat: latitude, lng: longitude}, function(err, zipcode) {});\r\n    geo.geocode(addressString, function(err, location) {});",
-  "_id": "starchup-geo@0.1.3",
-  "_shasum": "093627c70bd64b539c9cda95d387dfb609fb40a8",
-  "_from": "starchup-geo@^0.1.x",
-  "_resolved": "https://registry.npmjs.org/starchup-geo/-/starchup-geo-0.1.3.tgz"
+    "name": "starchup-geo",
+    "version": "1.0.4",
+    "main": "./main",
+    "description": "Various required Starchup geo-related components",
+    "author": {
+        "name": "Starchup Inc",
+        "email": "info@starchup.com",
+        "url": "http://starchup.com"
+    },
+    "keywords": [
+        "starchup"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "http://github.com/Starchup/starchup-geo"
+    },
+    "engines": {
+        "node": ">= 0.10"
+    },
+    "dependencies": {
+        "googlemaps": "git+https://github.com/moshen/node-googlemaps.git",
+        "limiter": "^1.x",
+        "node-zippopotamus": "^1.x"
+    },
+    "scripts": {},
+    "readmeFilename": "README.md",
+    "bugs": {
+        "url": "https://github.com/Starchup/starchup-geo/issues"
+    },
+    "homepage": "https://github.com/Starchup/starchup-geo",
+    "readme": "# Starchup Geo module\r\nVarious required Starchup geo-related components - best way to modularize the geocoding \r\nfunctionality for our sites.\r\n\r\n# Installation\r\n\r\n    npm install starchup-geo\r\n\r\n# Components:\r\n\r\n* City from Zipcode\r\n* Zipcode from location\r\n* Geocoder\r\n* Bulk Geocoder //TODO\r\n* Reverse-geocoder //TODO\r\n* Bulk Reverse-geocoder //TODO\r\n\r\n# Usage\r\n    var geo = require('starchup-geo');\r\n\r\n    geo.cityForZip(zipcode, function(err, city) {});\r\n    geo.zipForLocation({lat: latitude, lng: longitude}, function(err, zipcode) {});\r\n    geo.geocode(addressString, function(err, location) {});",
+    "_id": "starchup-geo@0.1.3",
+    "_shasum": "093627c70bd64b539c9cda95d387dfb609fb40a8",
+    "_from": "starchup-geo@^0.1.x",
+    "_resolved": "https://registry.npmjs.org/starchup-geo/-/starchup-geo-0.1.3.tgz"
 }

@@ -16,7 +16,7 @@ functionality for our sites.
 * Bulk Reverse-geocoder //TODO
 
 # Usage
-    var geo = require('starchup-geo');
+    var geo = new require('starchup-geo')({api_key: _GOOGLE_KEY_});
 
     geo.cityForZip(zipcode, function(err, city) {});
     geo.zipForLocation({lat: latitude, lng: longitude}, function(err, zipcode) {});
