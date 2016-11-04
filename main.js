@@ -498,10 +498,9 @@ var GEO = function(config) {
 
             //Stringify customer address
             var addressStr = address.street;
-            if (address.unit) addressStr = addressStr + ' ' + address.unit;
-            addressStr = addressStr + ', ' + address.city;
+            if (address.city) addressStr = addressStr + ', ' + address.city;
             if (address.state) addressStr = addressStr + ' ' + address.state;
-            addressStr = addressStr + ' ' + address.zip;
+            if (address.zip) addressStr = addressStr + ' ' + address.zip;
 
             return addressStr;
         },
