@@ -198,7 +198,7 @@ var GEO = function(config) {
                         errorCount++;
 
                         if (errorCount > 1) return reject(err);
-                        else return self.gm.geocode(params, processGeocode);
+                        else return self.gm.reverseGeocode(params, processGeocode);
                     }
 
                     if (result.status == "OVER_QUERY_LIMIT") {
