@@ -361,7 +361,7 @@ var GEO = function(config) {
 
                         //If there an error, try again, but only twice
                         if (errorCount > 1) return reject(err);
-                        else return self.gm.distance(params, processDirections);
+                        else return self.gm.distance(params, processDistance);
                     }
 
                     if (result.status == "OVER_QUERY_LIMIT") {
