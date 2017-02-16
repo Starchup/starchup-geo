@@ -454,26 +454,31 @@ var GEO = function(config) {
     self.util = {
         //Formats various inputs into an object with an address string and an optional country property
         formatLocation: function(location) {
+
+            location = JSON.parse(JSON.stringify(location));
+
             //Location is a facility or order
             if (location.postal_address) location = location.postal_address;
             if (location.customer_address) location = location.customer_address;
             if (location.address) location = location.address;
 
+            var loc = location;
+
+            //Get to lowest location object/relation
+            while (loc.location) {
+                loc = loc.location
+            }
+
+            if (self.util.exists(loc.lat) && self.util.exists(loc.lng)) {
+                return loc.lat + ',' + loc.lng;
+            }
+
+            if (self.util.exists(loc.latitude) && self.util.exists(loc.longitude)) {
+                return loc.latitude + ',' + loc.longitude;
+            }
+
             //location is address object
             if (location.street) return self.util.addressObjectToString(location);
-
-            //Get to lowerst location object/relation
-            while (location.location) {
-                location = location.location
-            }
-
-            if (self.util.exists(location.lat) && self.util.exists(location.lng)) {
-                return location.lat + ',' + location.lng;
-            }
-
-            if (self.util.exists(location.latitude) && self.util.exists(location.longitude)) {
-                return location.latitude + ',' + location.longitude;
-            }
 
             //If none of the above, error
             var error = new Error('Location is not a valid type');
