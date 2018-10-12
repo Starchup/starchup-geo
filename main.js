@@ -276,7 +276,7 @@ var GEO = function(config) {
                     region: origin.country
                 };
 
-                if (waypoints) {
+                if (waypoints && waypoints.length > 0) {
                     var locations;
                     if (!manualRoute) locations = "optimize:true";
                     else locations = "optimize:false";
