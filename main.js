@@ -314,7 +314,7 @@ var GEO = function(config) {
 
                     if (result.directions) {
                         var returnObj = {};
-                        returnObj[id] = result.directions;
+                        returnObj[id] = result;
                         resolve(returnObj);
                     } else if (!result.routes || result.routes.length < 1 ||
                         !result.routes[0].legs || result.routes[0].legs.length < 1) {
