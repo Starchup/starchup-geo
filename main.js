@@ -306,8 +306,17 @@ var GEO = function(config) {
                         return reject(error);
                     }
 
-                    if (result.status != "OK" ||
-                        !result.routes || result.routes.length < 1 ||
+                    if (result.status != "OK") {
+                        error = new Error('Could not get directions with Google Maps');
+                        error.code = '490';
+                        return reject(error);
+                    }
+
+                    if (result.directions) {
+                        var returnObj = {};
+                        returnObj[id] = result.directions;
+                        resolve(returnObj);
+                    } else if (!result.routes || result.routes.length < 1 ||
                         !result.routes[0].legs || result.routes[0].legs.length < 1) {
                         error = new Error('Could not get directions with Google Maps');
                         error.code = '490';
@@ -316,7 +325,7 @@ var GEO = function(config) {
 
                     var returnObj = {};
                     returnObj[id] = result.routes[0];
-                    return resolve(returnObj);
+                    resolve(returnObj);
                 }
 
             });
