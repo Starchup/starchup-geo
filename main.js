@@ -514,6 +514,7 @@ var GEO = function(config) {
             var addressStr = address.street;
             if (address.city) addressStr = addressStr + ', ' + address.city;
             if (address.state) addressStr = addressStr + ' ' + address.state;
+            if (address.zip) addressStr = addressStr + ' ' + address.zip;
 
             return addressStr;
         },
