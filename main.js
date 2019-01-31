@@ -46,7 +46,7 @@ var GEO = function (config)
             if (zipcode.match(zipcodeExp)) return countryCode;
         }
         return null;
-    }
+    };
 
     /**
      * Get the city matched to a provided zipcode
@@ -85,7 +85,7 @@ var GEO = function (config)
                 cb(ex);
             }
         });
-    }
+    };
 
     /**
      * Geocode an address to coordinates
@@ -505,7 +505,7 @@ var GEO = function (config)
             }
         }
         return c;
-    }
+    };
 
 
     /**
@@ -528,7 +528,7 @@ var GEO = function (config)
             //Get to lowest location object/relation
             while (loc.location)
             {
-                loc = loc.location
+                loc = loc.location;
             }
 
             if (self.util.exists(loc.lat) && self.util.exists(loc.lng))
@@ -561,7 +561,7 @@ var GEO = function (config)
             var returnObj = {};
 
             if (!country || country.length < 1)
-            {;
+            {
                 error = new Error('Country not supported for directions');
                 error.code = '400';
                 return error;
