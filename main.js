@@ -314,7 +314,7 @@ var GEO = function (config)
                 params.waypoints = locations;
             }
 
-            if (date) params.departureTime = date;
+            if (date) params.departure_time = date;
 
             self.gm.directions(params, processDirections);
 
