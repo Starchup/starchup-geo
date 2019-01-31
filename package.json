@@ -23,9 +23,8 @@
     },
     "dependencies":
     {
-        "@google/maps": "^0.5.5",
-        "limiter": "^1.x",
-        "node-zippopotamus": "^1.x"
+        "@google/maps": "0.5.5",
+        "node-zippopotamus": "1.0.0"
     },
     "scripts":
     {},
