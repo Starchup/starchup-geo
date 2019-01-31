@@ -401,7 +401,7 @@ var GEO = function (config)
                 destinations: theDestinations,
             };
 
-            self.gm.distance(params, processDistance);
+            self.gm.distanceMatrix(params, processDistance);
 
             function processDistance(err, result)
             {
@@ -411,7 +411,7 @@ var GEO = function (config)
 
                     //If there an error, try again, but only twice
                     if (errorCount > 1) return reject(err);
-                    else return self.gm.distance(params, processDistance);
+                    else return self.gm.distanceMatrix(params, processDistance);
                 }
 
                 if (result.json.status == "OVER_QUERY_LIMIT")
