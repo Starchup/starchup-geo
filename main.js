@@ -115,7 +115,10 @@ var GEO = function (config)
 
             var params = {
                 address: add,
-                components: "components=country:" + country,
+                components:
+                {
+                    country: country
+                },
                 language: "en",
                 region: country
             };
@@ -131,14 +134,14 @@ var GEO = function (config)
                     else return self.gm.geocode(params, processGeocode);
                 }
 
-                if (result.status == "OVER_QUERY_LIMIT")
+                if (result.json.status == "OVER_QUERY_LIMIT")
                 {
                     var error = new Error('Reached Google Maps API limit');
                     error.code = '490';
                     return reject(error);
                 }
 
-                if (result.status != "OK" || result.results.length < 1)
+                if (result.json.status != "OK" || result.json.results.length < 1)
                 {
                     var error = new Error('Could not create address with Google Maps');
                     error.code = '490';
@@ -146,7 +149,7 @@ var GEO = function (config)
                 }
 
                 var returnObj = {};
-                returnObj[id] = result.results[0].geometry.location;
+                returnObj[id] = result.json.results[0].geometry.location;
                 resolve(returnObj);
             }
         });
@@ -221,7 +224,7 @@ var GEO = function (config)
                     else return self.gm.reverseGeocode(params, processGeocode);
                 }
 
-                if (result.status == "OVER_QUERY_LIMIT")
+                if (result.json.status == "OVER_QUERY_LIMIT")
                 {
                     var error = new Error('Reached Google Maps API limit');
                     error.code = '490';
@@ -229,15 +232,15 @@ var GEO = function (config)
                 }
 
                 //Allow empty result array
-                if (result.status == 'ZERO_RESULTS')
+                if (result.json.status == 'ZERO_RESULTS')
                 {
                     var returnObj = {};
                     returnObj.identifier = identifier;
-                    returnObj.results = result.results;
+                    returnObj.results = result.json.results;
                     return resolve(returnObj);
                 }
 
-                if (result.status != "OK" || result.results.length < 1)
+                if (result.json.status != "OK" || result.json.results.length < 1)
                 {
                     var error = new Error('Could not create address with Google Maps');
                     error.code = '490';
@@ -246,7 +249,7 @@ var GEO = function (config)
 
                 var returnObj = {};
                 returnObj.identifier = identifier;
-                returnObj.results = result.results;
+                returnObj.results = result.json.results;
                 return resolve(returnObj);
             }
         });
@@ -329,28 +332,28 @@ var GEO = function (config)
                     else return self.gm.directions(params, processDirections);
                 }
 
-                if (result.status == "OVER_QUERY_LIMIT")
+                if (result.json.status == "OVER_QUERY_LIMIT")
                 {
                     error = new Error('Reached Google Maps API limit');
                     error.code = '490';
                     return reject(error);
                 }
 
-                if (result.status != "OK")
+                if (result.json.status != "OK")
                 {
                     error = new Error('Could not get directions with Google Maps');
                     error.code = '490';
                     return reject(error);
                 }
 
-                if (result.directions)
+                if (result.json.directions)
                 {
                     var returnObj = {};
-                    returnObj[id] = result;
+                    returnObj[id] = result.json;
                     resolve(returnObj);
                 }
-                else if (!result.routes || result.routes.length < 1 ||
-                    !result.routes[0].legs || result.routes[0].legs.length < 1)
+                else if (!result.json.routes || result.json.routes.length < 1 ||
+                    !result.json.routes[0].legs || result.json.routes[0].legs.length < 1)
                 {
                     error = new Error('Could not get directions with Google Maps');
                     error.code = '490';
@@ -358,7 +361,7 @@ var GEO = function (config)
                 }
 
                 var returnObj = {};
-                returnObj[id] = result.routes[0];
+                returnObj[id] = result.json.routes[0];
                 resolve(returnObj);
             }
         });
@@ -411,23 +414,23 @@ var GEO = function (config)
                     else return self.gm.distance(params, processDistance);
                 }
 
-                if (result.status == "OVER_QUERY_LIMIT")
+                if (result.json.status == "OVER_QUERY_LIMIT")
                 {
                     error = new Error('Reached Google Maps API limit');
                     error.code = '490';
                     return reject(error);
                 }
 
-                if (result.status != "OK" ||
-                    !result.rows || result.rows.length < 1 ||
-                    !result.rows[0].elements || result.rows[0].elements.length < 1)
+                if (result.json.status != "OK" ||
+                    !result.json.rows || result.json.rows.length < 1 ||
+                    !result.json.rows[0].elements || result.json.rows[0].elements.length < 1)
                 {
                     error = new Error('Could not get directions with Google Maps');
                     error.code = '490';
                     return reject(error);
                 }
 
-                return resolve(result);
+                return resolve(result.json);
             }
         });
     };
