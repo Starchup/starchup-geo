@@ -23,22 +23,26 @@ var countryCode = {
     'South Africa': 'za',
 };
 
-var GEO = function(config) {
+var GEO = function (config)
+{
     var self = this;
 
     if (!config || !config.api_key) throw new Error("Missing config or API key");
 
-    self.gm = new GoogleMapsAPI({
+    self.gm = new GoogleMapsAPI(
+    {
         key: config.api_key
     });
 
     /**
      * Utility to support various countries
      */
-    self.supportedCountry = function(zipcode) {
+    self.supportedCountry = function (zipcode)
+    {
         if (!zipcode || zipcode === undefined) return null;
 
-        for (var countryCode in zipcodeFormats) {
+        for (var countryCode in zipcodeFormats)
+        {
             if (!zipcodeFormats.hasOwnProperty(countryCode)) continue;
 
             var zipcodeExp = zipcodeFormats[countryCode];
@@ -54,9 +58,11 @@ var GEO = function(config) {
      *
      * return city
      */
-    self.cityForZip = function(zipcode, cb) {
+    self.cityForZip = function (zipcode, cb)
+    {
         var country = self.supportedCountry(zipcode);
-        if (!country || country.length < 1) {
+        if (!country || country.length < 1)
+        {
             var error = new Error('Zipcode format invalid or country not supported');
             error.code = '400';
             return cb(error);
@@ -64,16 +70,21 @@ var GEO = function(config) {
 
         if (country == 'ca') zipcode = zipcode.slice(0, 3);
 
-        zipp(country, zipcode, function(err, json) {
+        zipp(country, zipcode, function (err, json)
+        {
             if (err) return cb(err);
-            if (json.places.length < 1) {
+            if (json.places.length < 1)
+            {
                 err = new Error('Could not get valid city for address');
                 err.code = '400';
                 return cb(err);
             }
-            try {
+            try
+            {
                 cb(err, json.places[0]["place name"]);
-            } catch (ex) {
+            }
+            catch (ex)
+            {
                 cb(ex);
             }
         });
@@ -87,13 +98,16 @@ var GEO = function(config) {
      *
      * return {identifier: coordinates}
      */
-    self.geocode = function(identifier, address) {
-        return new Promise(function(resolve, reject) {
+    self.geocode = function (identifier, address)
+    {
+        return new Promise(function (resolve, reject)
+        {
             var errorCount = 0;
 
             var country = countryCode[address.country];
             if (!country && address.zip) country = self.supportedCountry(address.zip);
-            if (!country || country.length < 1) {
+            if (!country || country.length < 1)
+            {
                 var error = new Error('Country not supported for geocoding');
                 error.code = '400';
                 return reject(error);
@@ -101,7 +115,8 @@ var GEO = function(config) {
 
             var id = identifier;
             var add = self.util.formatLocation(address);
-            limiter.removeTokens(1, function(err, remainingRequests) {
+            limiter.removeTokens(1, function (err, remainingRequests)
+            {
                 var params = {
                     "address": add,
                     "components": "components=country:" + country,
@@ -110,21 +125,25 @@ var GEO = function(config) {
                 };
                 self.gm.geocode(params, processGeocode);
 
-                function processGeocode(err, result) {
-                    if (err) {
+                function processGeocode(err, result)
+                {
+                    if (err)
+                    {
                         errorCount++;
 
                         if (errorCount > 1) return reject(err);
                         else return self.gm.geocode(params, processGeocode);
                     }
 
-                    if (result.status == "OVER_QUERY_LIMIT") {
+                    if (result.status == "OVER_QUERY_LIMIT")
+                    {
                         var error = new Error('Reached Google Maps API limit');
                         error.code = '490';
                         return reject(error);
                     }
 
-                    if (result.status != "OK" || result.results.length < 1) {
+                    if (result.status != "OK" || result.results.length < 1)
+                    {
                         var error = new Error('Could not create address with Google Maps');
                         error.code = '490';
                         return reject(error);
@@ -156,16 +175,19 @@ var GEO = function(config) {
      *
      *  This function allows an empty array to be returned as a non-error result.  Any function calling this must account for that possibility.
      */
-    self.reverseGeocode = function(identifier, location, options) {
+    self.reverseGeocode = function (identifier, location, options)
+    {
         var errorCount = 0;
         var id = identifier;
         if (!options) options = {};
 
         var latLng = self.util.formatLocation(location);
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject)
+        {
 
-            limiter.removeTokens(1, function(err, remainingRequests) {
+            limiter.removeTokens(1, function (err, remainingRequests)
+            {
 
                 var params = {
                     'latlng': latLng,
@@ -173,18 +195,22 @@ var GEO = function(config) {
                     'location_type': 'ROOFTOP'
                 };
 
-                if (options.result_types) {
+                if (options.result_types)
+                {
                     var result_type = "";
-                    options.result_types.forEach(function(type, idx) {
+                    options.result_types.forEach(function (type, idx)
+                    {
                         if (idx > 0) result_type += '|';
                         result_type += type;
                     });
                     params.result_type = result_type;
                 }
 
-                if (options.location_types) {
+                if (options.location_types)
+                {
                     var location_type = "";
-                    options.location_types.forEach(function(type, idx) {
+                    options.location_types.forEach(function (type, idx)
+                    {
                         if (idx > 0) location_type += '|';
                         location_type += type;
                     });
@@ -193,29 +219,34 @@ var GEO = function(config) {
 
                 self.gm.reverseGeocode(params, processGeocode);
 
-                function processGeocode(err, result) {
-                    if (err) {
+                function processGeocode(err, result)
+                {
+                    if (err)
+                    {
                         errorCount++;
 
                         if (errorCount > 1) return reject(err);
                         else return self.gm.reverseGeocode(params, processGeocode);
                     }
 
-                    if (result.status == "OVER_QUERY_LIMIT") {
+                    if (result.status == "OVER_QUERY_LIMIT")
+                    {
                         var error = new Error('Reached Google Maps API limit');
                         error.code = '490';
                         return reject(error);
                     }
 
                     //Allow empty result array
-                    if (result.status == 'ZERO_RESULTS') {
+                    if (result.status == 'ZERO_RESULTS')
+                    {
                         var returnObj = {};
                         returnObj.identifier = identifier;
                         returnObj.results = result.results;
                         return resolve(returnObj);
                     }
 
-                    if (result.status != "OK" || result.results.length < 1) {
+                    if (result.status != "OK" || result.results.length < 1)
+                    {
                         var error = new Error('Could not create address with Google Maps');
                         error.code = '490';
                         return reject(error);
@@ -244,14 +275,16 @@ var GEO = function(config) {
      *
      * return {identifier: directions}
      */
-    self.directions = function(identifier, origin, destination, waypoints, date, manualRoute) {
+    self.directions = function (identifier, origin, destination, waypoints, date, manualRoute)
+    {
         var id = identifier;
         var orig;
         var error;
         var errorCount = 0;
         var dest = destination;
 
-        if (!origin || !destination) {
+        if (!origin || !destination)
+        {
             error = new Error('No origin or destination provided');
             error.code = '490';
             return Promise.reject(error);
@@ -260,7 +293,8 @@ var GEO = function(config) {
         orig = self.util.formatLocation(origin);
         dest = self.util.formatLocation(destination);
 
-        waypoints = waypoints.map(function(wp) {
+        waypoints = waypoints.map(function (wp)
+        {
             return self.util.formatLocation(wp);
         });
 
@@ -268,20 +302,24 @@ var GEO = function(config) {
         if (orig instanceof Error) return Promise.reject(orig);
         if (dest instanceof Error) return Promise.reject(dest);
 
-        return new Promise(function(resolve, reject) {
-            limiter.removeTokens(1, function(err, remainingRequests) {
+        return new Promise(function (resolve, reject)
+        {
+            limiter.removeTokens(1, function (err, remainingRequests)
+            {
                 var params = {
                     origin: orig,
                     destination: dest,
                     region: origin.country
                 };
 
-                if (waypoints && waypoints.length > 0) {
+                if (waypoints && waypoints.length > 0)
+                {
                     var locations;
                     if (!manualRoute) locations = "optimize:true";
                     else locations = "optimize:false";
 
-                    waypoints.forEach(function(waypoint) {
+                    waypoints.forEach(function (waypoint)
+                    {
                         locations = locations + "|" + waypoint;
                     });
                     params.waypoints = locations;
@@ -291,8 +329,10 @@ var GEO = function(config) {
 
                 self.gm.directions(params, processDirections);
 
-                function processDirections(err, result) {
-                    if (err) {
+                function processDirections(err, result)
+                {
+                    if (err)
+                    {
                         errorCount++;
 
                         //If there an error, try again, but only twice
@@ -300,24 +340,29 @@ var GEO = function(config) {
                         else return self.gm.directions(params, processDirections);
                     }
 
-                    if (result.status == "OVER_QUERY_LIMIT") {
+                    if (result.status == "OVER_QUERY_LIMIT")
+                    {
                         error = new Error('Reached Google Maps API limit');
                         error.code = '490';
                         return reject(error);
                     }
 
-                    if (result.status != "OK") {
+                    if (result.status != "OK")
+                    {
                         error = new Error('Could not get directions with Google Maps');
                         error.code = '490';
                         return reject(error);
                     }
 
-                    if (result.directions) {
+                    if (result.directions)
+                    {
                         var returnObj = {};
                         returnObj[id] = result;
                         resolve(returnObj);
-                    } else if (!result.routes || result.routes.length < 1 ||
-                        !result.routes[0].legs || result.routes[0].legs.length < 1) {
+                    }
+                    else if (!result.routes || result.routes.length < 1 ||
+                        !result.routes[0].legs || result.routes[0].legs.length < 1)
+                    {
                         error = new Error('Could not get directions with Google Maps');
                         error.code = '490';
                         return reject(error);
@@ -333,30 +378,36 @@ var GEO = function(config) {
     };
 
     //Calls Google Maps Distance Matrix API
-    self.distanceMatrix = function(origins, destinations, cb) {
+    self.distanceMatrix = function (origins, destinations, cb)
+    {
         var error;
         var errorCount = 0;
 
-        if (!origins.length || !destinations.length) {
+        if (!origins.length || !destinations.length)
+        {
             error = new Error('No origins or destinations provided');
             error.code = '490';
             return Promise.reject(error);
         }
 
         //Format for Google
-        var originStrings = origins.map(function(origin) {
+        var originStrings = origins.map(function (origin)
+        {
             return self.util.formatLocation(origin);
         });
 
-        var destStrings = destinations.map(function(destination) {
+        var destStrings = destinations.map(function (destination)
+        {
             return self.util.formatLocation(destination);
         });
 
         var theOrigins = originStrings.join('|');
         var theDestinations = destStrings.join('|');
 
-        return new Promise(function(resolve, reject) {
-            limiter.removeTokens(1, function(err, remainingRequests) {
+        return new Promise(function (resolve, reject)
+        {
+            limiter.removeTokens(1, function (err, remainingRequests)
+            {
                 var params = {
                     origins: theOrigins,
                     destinations: theDestinations,
@@ -364,8 +415,10 @@ var GEO = function(config) {
 
                 self.gm.distance(params, processDistance);
 
-                function processDistance(err, result) {
-                    if (err) {
+                function processDistance(err, result)
+                {
+                    if (err)
+                    {
                         errorCount++;
 
                         //If there an error, try again, but only twice
@@ -373,7 +426,8 @@ var GEO = function(config) {
                         else return self.gm.distance(params, processDistance);
                     }
 
-                    if (result.status == "OVER_QUERY_LIMIT") {
+                    if (result.status == "OVER_QUERY_LIMIT")
+                    {
                         error = new Error('Reached Google Maps API limit');
                         error.code = '490';
                         return reject(error);
@@ -381,7 +435,8 @@ var GEO = function(config) {
 
                     if (result.status != "OK" ||
                         !result.rows || result.rows.length < 1 ||
-                        !result.rows[0].elements || result.rows[0].elements.length < 1) {
+                        !result.rows[0].elements || result.rows[0].elements.length < 1)
+                    {
                         error = new Error('Could not get directions with Google Maps');
                         error.code = '490';
                         return reject(error);
@@ -403,20 +458,26 @@ var GEO = function(config) {
      *
      * return {bool}
      */
-    self.pointInPolygon = function(point, coords) {
+    self.pointInPolygon = function (point, coords)
+    {
         var latlng;
 
         //Accept geopoint object as well as Lat/Long object
         if (point.location) point = point.location;
 
-        if (self.util.exists(point.lat) && self.util.exists(point.lng)) {
+        if (self.util.exists(point.lat) && self.util.exists(point.lng))
+        {
             latlng = {
                 lat: point.lat,
                 lng: point.lng
             };
-        } else if (self.util.exists(point.lat) && self.util.exists(point.lng)) {
+        }
+        else if (self.util.exists(point.lat) && self.util.exists(point.lng))
+        {
             point = point;
-        } else {
+        }
+        else
+        {
             error = new Error('Point must have lat and lng');
             error.code = '490';
             return error;
@@ -426,18 +487,23 @@ var GEO = function(config) {
         if (coords.points) coords = coords.points;
 
         //Format to geolib required format
-        var formattedCoords = coords.map(function(coord) {
-            if (self.util.exists(coord.lat) && self.util.exists(coord.lng)) {
+        var formattedCoords = coords.map(function (coord)
+        {
+            if (self.util.exists(coord.lat) && self.util.exists(coord.lng))
+            {
                 return {
                     lat: coord.lat,
                     lng: coord.lng
                 };
-            } else if (self.util.exists(coord.lat) && self.util.exists(coord.lng)) {
+            }
+            else if (self.util.exists(coord.lat) && self.util.exists(coord.lng))
+            {
                 return coord;
             }
         });
 
-        for (var c = false, i = -1, l = coords.length, j = l - 1; ++i < l; j = i) {
+        for (var c = false, i = -1, l = coords.length, j = l - 1; ++i < l; j = i)
+        {
             if (
                 (
                     (coords[i].lng <= latlng.lng && latlng.lng < coords[j].lng) ||
@@ -449,7 +515,8 @@ var GEO = function(config) {
                     (coords[j].lng - coords[i].lng) +
                     coords[i].lat
                 )
-            ) {
+            )
+            {
                 c = !c;
             }
         }
@@ -462,7 +529,8 @@ var GEO = function(config) {
      */
     self.util = {
         //Formats various inputs into an object with an address string and an optional country property
-        formatLocation: function(location) {
+        formatLocation: function (location)
+        {
 
             location = JSON.parse(JSON.stringify(location));
 
@@ -474,15 +542,18 @@ var GEO = function(config) {
             var loc = location;
 
             //Get to lowest location object/relation
-            while (loc.location) {
+            while (loc.location)
+            {
                 loc = loc.location
             }
 
-            if (self.util.exists(loc.lat) && self.util.exists(loc.lng)) {
+            if (self.util.exists(loc.lat) && self.util.exists(loc.lng))
+            {
                 return loc.lat + ',' + loc.lng;
             }
 
-            if (self.util.exists(loc.latitude) && self.util.exists(loc.longitude)) {
+            if (self.util.exists(loc.latitude) && self.util.exists(loc.longitude))
+            {
                 return loc.latitude + ',' + loc.longitude;
             }
 
@@ -496,7 +567,8 @@ var GEO = function(config) {
         },
 
         //Returns object with address string and country
-        addressObjectToString: function(object) {
+        addressObjectToString: function (object)
+        {
             var error;
             var address = object;
 
@@ -504,7 +576,8 @@ var GEO = function(config) {
             if (!country) country = self.supportedCountry(address.zip);
             var returnObj = {};
 
-            if (!country || country.length < 1) {;
+            if (!country || country.length < 1)
+            {;
                 error = new Error('Country not supported for directions');
                 error.code = '400';
                 return error;
@@ -519,7 +592,8 @@ var GEO = function(config) {
             return addressStr;
         },
 
-        exists: function(val) {
+        exists: function (val)
+        {
             return val !== undefined && val !== null;
         }
     };
