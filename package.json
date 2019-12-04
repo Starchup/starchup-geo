@@ -1,9 +1,10 @@
 {
     "name": "starchup-geo",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "main": "./main",
     "description": "Various required Starchup geo-related components",
-    "author": {
+    "author":
+    {
         "name": "Starchup Inc",
         "email": "info@starchup.com",
         "url": "http://starchup.com"
@@ -11,21 +12,26 @@
     "keywords": [
         "starchup"
     ],
-    "repository": {
+    "repository":
+    {
         "type": "git",
         "url": "http://github.com/Starchup/starchup-geo"
     },
-    "engines": {
+    "engines":
+    {
         "node": ">= 0.10"
     },
-    "dependencies": {
+    "dependencies":
+    {
         "googlemaps": "git+https://github.com/moshen/node-googlemaps.git",
         "limiter": "^1.x",
         "node-zippopotamus": "^1.x"
     },
-    "scripts": {},
+    "scripts":
+    {},
     "readmeFilename": "README.md",
-    "bugs": {
+    "bugs":
+    {
         "url": "https://github.com/Starchup/starchup-geo/issues"
     },
     "homepage": "https://github.com/Starchup/starchup-geo",

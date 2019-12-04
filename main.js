@@ -127,6 +127,11 @@ var GEO = function (config)
 
                 function processGeocode(err, result)
                 {
+                    if (errorCount > 1)
+                    {
+                        console.debug('starchup-geo geocode retried once with error: ' + !!err);
+                    }
+
                     if (err)
                     {
                         errorCount++;
@@ -185,7 +190,6 @@ var GEO = function (config)
 
         return new Promise(function (resolve, reject)
         {
-
             limiter.removeTokens(1, function (err, remainingRequests)
             {
 
@@ -221,6 +225,11 @@ var GEO = function (config)
 
                 function processGeocode(err, result)
                 {
+                    if (errorCount > 1)
+                    {
+                        console.debug('starchup-geo reverseGeocode retried once with error: ' + !!err);
+                    }
+
                     if (err)
                     {
                         errorCount++;
@@ -331,6 +340,11 @@ var GEO = function (config)
 
                 function processDirections(err, result)
                 {
+                    if (errorCount > 1)
+                    {
+                        console.debug('starchup-geo directions retried once with error: ' + !!err);
+                    }
+
                     if (err)
                     {
                         errorCount++;
@@ -417,6 +431,11 @@ var GEO = function (config)
 
                 function processDistance(err, result)
                 {
+                    if (errorCount > 1)
+                    {
+                        console.debug('starchup-geo distance retried once with error: ' + !!err);
+                    }
+
                     if (err)
                     {
                         errorCount++;
