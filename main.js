@@ -363,7 +363,9 @@ var GEO = function (config)
 
                     if (result.status != "OK")
                     {
-                        error = new Error('Could not get directions with Google Maps: ' + result.status);
+                        console.error('Could not get directions with Google Maps: ' + result.status + ' with data: ' + JSON.stringify(params));
+
+                        error = new Error('Could not get directions with Google Maps');
                         error.code = '490';
                         return reject(error);
                     }
@@ -377,7 +379,9 @@ var GEO = function (config)
                     else if (!result.routes || result.routes.length < 1 ||
                         !result.routes[0].legs || result.routes[0].legs.length < 1)
                     {
-                        error = new Error('Could not get route directions with Google Maps: ' + result.status);
+                        console.error('Could not get route directions with Google Maps: ' + result.status + ' with data: ' + JSON.stringify(params));
+
+                        error = new Error('Could not get route directions with Google Maps');
                         error.code = '490';
                         return reject(error);
                     }
@@ -456,7 +460,9 @@ var GEO = function (config)
                         !result.rows || result.rows.length < 1 ||
                         !result.rows[0].elements || result.rows[0].elements.length < 1)
                     {
-                        error = new Error('Could not get distance matrix data with Google Maps: ' + result.status);
+                        console.error('Could not get distance matrix data with Google Maps: ' + result.status + ' with data: ' + JSON.stringify(params));
+
+                        error = new Error('Could not get distance matrix data with Google Maps');
                         error.code = '490';
                         return reject(error);
                     }
